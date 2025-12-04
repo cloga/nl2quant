@@ -1,0 +1,15 @@
+{
+  "id": "2c1a0fda-3abc-46ab-824e-3a9f7ff35abd",
+  "title": "获取中国平安(601318.SH)的数据...",
+  "timestamp": "2025-12-05T01:37:25.612788",
+  "messages": [
+    {
+      "role": "user",
+      "content": "获取中国平安(601318.SH)的数据并展示收盘价"
+    },
+    {
+      "role": "assistant",
+      "content": "Successfully fetched data for 601318.SH from 20230101 to 20231231."
+    }
+  ]
+}

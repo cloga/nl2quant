@@ -44,7 +44,7 @@ def render_trace_ui(trace_data):
     
     # Render Steps
     steps = trace_data.get("steps", [])
-    for step in steps:
+    for i, step in enumerate(steps):
         key = step["key"]
         value = step["value"]
         full_state = step["full_state"]
@@ -87,8 +87,8 @@ def render_trace_ui(trace_data):
                 # Display Analyst Visuals in Trace
                 if "analyst_figures" in value and value["analyst_figures"]:
                     st.markdown("#### 📊 Analyst Charts")
-                    for fig in value["analyst_figures"]:
-                        st.plotly_chart(fig, use_container_width=True)
+                    for j, fig in enumerate(value["analyst_figures"]):
+                        st.plotly_chart(fig, use_container_width=True, key=f"trace_analyst_chart_{i}_{j}")
                 
                 if "analyst_data" in value and value["analyst_data"]:
                     st.markdown("#### 📋 Analyst Data")
@@ -349,8 +349,8 @@ if prompt:
             initial_state = {
                 "messages": [HumanMessage(content=prompt)],
                 # "tickers": [], # Let the agent extract it
-                "start_date": "20230101",
-                "end_date": "20231231",
+                # "start_date": "20230101",
+                # "end_date": "20231231",
                 "llm_provider": provider.lower() if provider else None,
                 "llm_model": model_name.strip() if model_name else None,
             }
@@ -428,12 +428,12 @@ if prompt:
         
         # Display Plot
         if "figure_json" in final_state and final_state["figure_json"]:
-            st.plotly_chart(final_state["figure_json"])
+            st.plotly_chart(final_state["figure_json"], key="final_figure_json")
 
         # Display Analyst Figures
         if "analyst_figures" in final_state and final_state["analyst_figures"]:
-            for fig in final_state["analyst_figures"]:
-                st.plotly_chart(fig)
+            for i, fig in enumerate(final_state["analyst_figures"]):
+                st.plotly_chart(fig, key=f"final_analyst_chart_{i}")
         
         # Display Analyst Data
         if "analyst_data" in final_state and final_state["analyst_data"]:
