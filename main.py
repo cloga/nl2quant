@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage
 # from streamlit_agraph import agraph, Node, Edge, Config
 from app.config import Config as AppConfig
 from app.history import save_session, load_session, list_sessions, create_new_session
+from app.ui_utils import mask_secret
 
 # Load environment variables
 load_dotenv()
@@ -126,7 +127,17 @@ def render_trace_ui(trace_data):
                 st.markdown("#### 🤖 LLM Interaction")
                 with st.expander("Show Prompt & Response", expanded=False):
                     st.markdown("**Input Variables:**")
-                    st.json(value["llm_interaction"]["input"])
+                    # Mask any obvious secret keys in the input dict
+                    try:
+                        safe_input = dict(value["llm_interaction"]["input"]) if isinstance(value["llm_interaction"]["input"], dict) else {"input": str(value["llm_interaction"]["input"]) }
+                        for k in list(safe_input.keys()):
+                            lk = k.lower()
+                            if 'token' in lk or 'api_key' in lk or 'secret' in lk or 'password' in lk:
+                                safe_input[k] = mask_secret(safe_input[k])
+                    except Exception:
+                        safe_input = {"input": "<could not format>"}
+
+                    st.json(safe_input)
                     st.markdown("**Raw Response:**")
                     st.text(value["llm_interaction"]["response"])
 
@@ -235,8 +246,8 @@ Supported by **Tushare** data and **VectorBT**.
 # Sidebar for Configuration
 with st.sidebar:
     st.header("Configuration")
-    tushare_token = st.text_input("Tushare Token", type="password", value=os.getenv("TUSHARE_TOKEN", ""))
 
+    # Provider selection and basic model/base URL configuration.
     supported = AppConfig.SUPPORTED_LLM_PROVIDERS
     current_provider = os.getenv("LLM_PROVIDER", AppConfig.LLM_PROVIDER)
     try:
@@ -247,11 +258,7 @@ with st.sidebar:
     provider = st.selectbox("LLM Provider", options=supported, index=default_index)
     prefix = f"LLM_{provider.upper()}"
 
-    api_key = st.text_input(
-        "LLM API Key",
-        type="password",
-        value=os.getenv(f"{prefix}_API_KEY", ""),
-    )
+    # We do NOT show or allow editing of API keys or tokens in the UI for security reasons.
     model_name = st.text_input(
         "LLM Model",
         value=os.getenv(f"{prefix}_MODEL_NAME", AppConfig.PROVIDER_DEFAULT_MODELS.get(provider, "")),
@@ -261,12 +268,9 @@ with st.sidebar:
         value=os.getenv(f"{prefix}_BASE_URL", AppConfig.PROVIDER_DEFAULT_BASE_URL.get(provider, "")),
     )
 
-    if tushare_token:
-        os.environ["TUSHARE_TOKEN"] = tushare_token
+    # Only update non-secret settings in environment (provider, model, base_url)
     if provider:
         os.environ["LLM_PROVIDER"] = provider
-    if api_key:
-        os.environ[f"{prefix}_API_KEY"] = api_key
     if model_name:
         os.environ[f"{prefix}_MODEL_NAME"] = model_name
     if base_url:

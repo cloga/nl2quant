@@ -102,3 +102,19 @@ def display_token_usage(response):
             total_tokens = token_usage.get("total_tokens", 0)
             
             st.caption(f"🪙 Token Usage: Input: {prompt_tokens} | Output: {completion_tokens} | Total: {total_tokens}")
+
+
+def mask_secret(value: str | None, unmasked_chars: int = 4) -> str:
+    """Return a masked version of a secret string, keeping last `unmasked_chars` visible.
+
+    Examples:
+        mask_secret('abcd1234') -> '****1234'
+        mask_secret(None) -> '<missing>'
+    """
+    if not value:
+        return "<missing>"
+    s = str(value)
+    if len(s) <= unmasked_chars:
+        return "*" * len(s)
+    masked = "*" * (len(s) - unmasked_chars) + s[-unmasked_chars:]
+    return masked

@@ -96,8 +96,15 @@ def data_agent(state: AgentState):
             result = raw_response.content.strip()
             
             # Store interaction for debugging
+            # Mask any sensitive fields in input_vars before storing
+            safe_input_vars = dict(input_vars)
+            for kk in list(safe_input_vars.keys()):
+                lk = kk.lower()
+                if 'token' in lk or 'api_key' in lk or 'secret' in lk or 'password' in lk:
+                    safe_input_vars[kk] = '***MASKED***'
+
             llm_interaction = {
-                "input": input_vars,
+                "input": safe_input_vars,
                 "prompt": formatted_prompt,
                 "response": raw_response.content
             }
