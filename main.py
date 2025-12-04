@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
@@ -9,6 +10,15 @@ from app.history import save_session, load_session, list_sessions, create_new_se
 
 # Load environment variables
 load_dotenv()
+
+# Agent Icons Mapping
+AGENT_ICONS = {
+    "planner_agent": "🧭",  # Compass for planning/navigation
+    "data_agent": "🗂️",     # Card index for data
+    "quant_agent": "📈",    # Chart for quantitative analysis
+    "exec_agent": "⚙️",     # Gear for execution
+    "analyst_agent": "🧐"   # Monocle face for deep analysis
+}
 
 st.set_page_config(page_title="NL-to-Quant Platform", layout="wide")
 
@@ -38,8 +48,10 @@ def render_trace_ui(trace_data):
         key = step["key"]
         value = step["value"]
         full_state = step["full_state"]
+        duration = step.get("duration", 0)
         
-        with st.expander(f"Agent Execution: {key}", expanded=True):
+        icon = AGENT_ICONS.get(key, "🤖")
+        with st.expander(f"{icon} Agent Execution: {key} ({duration:.2f}s)", expanded=True):
             # Display Reasoning & Inputs
             st.markdown("#### 🧠 Reasoning & Inputs")
             
@@ -349,9 +361,13 @@ if prompt:
             completed_nodes = []
             execution_steps = []
             
-            st.write("🤖 **Agent:** Planner is thinking...")
+            st.write(f"{AGENT_ICONS['planner_agent']} **Agent:** Planner is thinking...")
+            
+            step_start_time = time.time()
             
             for output in app.stream(initial_state):
+                step_duration = time.time() - step_start_time
+                
                 for key, value in output.items():
                     # Update Graph - Removed
                     completed_nodes.append(key)
@@ -366,109 +382,43 @@ if prompt:
                     execution_steps.append({
                         "key": key,
                         "value": value,
-                        "full_state": full_state.copy()
+                        "full_state": full_state.copy(),
+                        "duration": step_duration
                     })
                     
-                    with st.expander(f"Agent Execution: {key}", expanded=True):
-                        # Display Reasoning & Inputs
-                        st.markdown("#### 🧠 Reasoning & Inputs")
-                        
-                        # Planner Reasoning
-                        if "reasoning" in value and value["reasoning"]:
-                            st.markdown(f"**Reasoning:** {value['reasoning']}")
-                        
-                        # Planner Decision
-                        if "next_step" in value and value["next_step"]:
-                            st.markdown(f"**Decision:** Next step is `{value['next_step']}`")
-
-                        # Inputs Context (inferred from agent type)
-                        if key == "data_agent":
-                            # Show the input used for extraction
-                            if "messages" in full_state and full_state['messages']:
-                                input_msg = full_state['messages'][0].content
-                                st.markdown(f"**Input:** User Request: '{input_msg}'")
-
-                        elif key == "quant_agent":
-                            if "feedback" in full_state and full_state["feedback"]:
-                                st.warning(f"**Input Feedback:** {full_state['feedback']}")
-                            if "market_data" in full_state and full_state["market_data"]:
-                                tickers = list(full_state["market_data"].keys())
-                                st.markdown(f"**Input Data:** Available for {tickers}")
-                        
-                        elif key == "exec_agent":
-                            st.markdown("**Input:** Strategy Code (see below)")
-                        
-                        elif key == "analyst_agent":
-                            if "performance_metrics" in full_state:
-                                st.markdown("**Input:** Performance Metrics & Execution Logs")
-                            
-                            # Display Analyst Visuals
-                            if "analyst_figures" in value and value["analyst_figures"]:
-                                st.markdown("#### 📊 Analyst Charts")
-                                for fig in value["analyst_figures"]:
-                                    st.plotly_chart(fig, use_container_width=True)
-                            
-                            if "analyst_data" in value and value["analyst_data"]:
-                                st.markdown("#### 📋 Analyst Data")
-                                for title, df in value["analyst_data"].items():
-                                    st.write(f"**{title}**")
-                                    st.dataframe(df)
-
-                        # Display Messages
-                        if "messages" in value and value["messages"]:
-                            st.markdown("#### 💬 Messages")
-                            msgs = value["messages"]
-                            if not isinstance(msgs, list):
-                                msgs = [msgs]
-                            for msg in msgs:
-                                content = msg.content if hasattr(msg, "content") else str(msg)
-                                st.info(content)
-
-                        # Display Strategy Code
-                        if "strategy_code" in value and value["strategy_code"]:
-                            st.markdown("#### 💻 Strategy Code")
-                            st.code(value["strategy_code"], language="python")
-
-                        # Display Execution Output
-                        if "execution_output" in value and value["execution_output"]:
-                            st.markdown("#### ⚙️ Execution Output")
-                            st.text(value["execution_output"])
-                        
-                        # Display Market Data Info
-                        if "market_data" in value and value["market_data"] is not None:
-                            st.markdown("#### 📈 Market Data")
-                            st.success("Market data fetched successfully.")
-                        
-                        # Display LLM Interaction
-                        if "llm_interaction" in value and value["llm_interaction"]:
-                            st.markdown("#### 🤖 LLM Interaction")
-                            with st.expander("Show Prompt & Response", expanded=False):
-                                st.markdown("**Input Variables:**")
-                                st.json(value["llm_interaction"]["input"])
-                                st.markdown("**Raw Response:**")
-                                st.text(value["llm_interaction"]["response"])
-
-                        # Display JSON for other details
-                        st.markdown("#### 🔍 State Update Details")
-                        st.json(value)
+                    step_idx = len(execution_steps)
+                    icon = AGENT_ICONS.get(key, "🤖")
+                    
+                    # Display duration for the completed step
+                    st.caption(f"⏱️ Step completed in {step_duration:.2f}s")
+                    
+                    # --- RENDERING MOVED TO AGENTS FOR LIVE VIEW ---
+                    # The agents now handle their own UI rendering inside st.expander blocks.
+                    # We only track state here.
 
                     # Show status for next step
                     if key == "planner_agent":
                         next_step = value.get("next_step")
                         if next_step and next_step != "FINISH":
-                             st.write(f"🤖 **Agent:** {next_step} is working...")
+                             icon = AGENT_ICONS.get(next_step, "🤖")
+                             # st.write(f"{icon} **Agent:** {next_step} is working...") 
+                             # Commented out to avoid clutter, let the agent announce itself
                     else:
                         # All other agents go back to planner
-                        st.write("🤖 **Agent:** Planner is thinking...")
+                        # st.write(f"{AGENT_ICONS['planner_agent']} **Agent:** Planner is thinking...")
+                        pass
+                
+                # Reset timer for the next step
+                step_start_time = time.time()
             
             status.update(label="Complete!", state="complete", expanded=False)
             final_state = full_state
             
             # Save trace to session state for persistence
             st.session_state.last_trace = {
-                "nodes": nodes,
-                "edges": edges,
-                "config": config,
+                "nodes": [],
+                "edges": [],
+                "config": None,
                 "steps": execution_steps
             }
         

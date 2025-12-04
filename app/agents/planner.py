@@ -1,7 +1,9 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage
+import streamlit as st
 from app.llm import get_llm
 from app.state import AgentState
+from app.ui_utils import render_live_timer
 
 def planner_agent(state: AgentState):
     """
@@ -90,32 +92,48 @@ def planner_agent(state: AgentState):
         "user_input": user_input
     }
     
-    response = chain.invoke(input_vars)
+    # Capture formatted messages for debugging/UI
+    formatted_messages = prompt.format_messages(**input_vars)
+    formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])
     
-    content = response.content.strip()
-    
-    reasoning = ""
-    decision = "FINISH"
-    
-    if "Decision:" in content:
-        parts = content.split("Decision:")
-        reasoning = parts[0].replace("Reasoning:", "").strip()
-        decision = parts[1].strip().replace("'", "").replace('"', "")
-    else:
-        # Fallback if format is not followed
-        decision = content.replace("'", "").replace('"', "")
-        reasoning = "No reasoning provided."
-    
-    # Basic validation of decision
-    valid_agents = ["data_agent", "quant_agent", "exec_agent", "analyst_agent", "FINISH"]
-    if decision not in valid_agents:
-        # Fallback logic if LLM hallucinates
-        if has_data == "No": decision = "data_agent"
-        elif has_code == "No": decision = "quant_agent"
-        elif has_metrics == "No": decision = "exec_agent"
-        else: decision = "analyst_agent"
+    with st.expander("🧭 Planner Agent", expanded=True):
+        timer = render_live_timer("⏳ Planner is thinking...")
+        response = chain.invoke(input_vars)
+        timer.empty() # Clear timer when done
         
-    print(f"Planner Decision: {decision}")
+        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+            st.markdown("**📝 Prompt:**")
+            st.code(formatted_prompt, language="markdown")
+            st.markdown("**💬 Response:**")
+            st.code(response.content, language="text")
+        
+        content = response.content.strip()
+        
+        reasoning = ""
+        decision = "FINISH"
+        
+        if "Decision:" in content:
+            parts = content.split("Decision:")
+            reasoning = parts[0].replace("Reasoning:", "").strip()
+            decision = parts[1].strip().replace("'", "").replace('"', "")
+        else:
+            # Fallback if format is not followed
+            decision = content.replace("'", "").replace('"', "")
+            reasoning = "No reasoning provided."
+        
+        # Basic validation of decision
+        valid_agents = ["data_agent", "quant_agent", "exec_agent", "analyst_agent", "FINISH"]
+        if decision not in valid_agents:
+            # Fallback logic if LLM hallucinates
+            if has_data == "No": decision = "data_agent"
+            elif has_code == "No": decision = "quant_agent"
+            elif has_metrics == "No": decision = "exec_agent"
+            else: decision = "analyst_agent"
+            
+        print(f"Planner Decision: {decision}")
+        
+        st.markdown(f"**Reasoning:** {reasoning}")
+        st.markdown(f"**Decision:** `{decision}`")
     
     # If retrying, increment counter
     if decision == "quant_agent" and has_code == "Yes":
@@ -128,6 +146,7 @@ def planner_agent(state: AgentState):
         "reasoning": reasoning,
         "llm_interaction": {
             "input": input_vars,
+            "prompt": formatted_prompt,
             "response": content
         }
     }

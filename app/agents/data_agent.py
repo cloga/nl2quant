@@ -1,7 +1,9 @@
 import tushare as ts
 import pandas as pd
+import streamlit as st
 from app.config import Config
 from app.state import AgentState
+from app.ui_utils import render_live_timer
 from langchain_core.messages import AIMessage
 
 def data_agent(state: AgentState):
@@ -9,6 +11,7 @@ def data_agent(state: AgentState):
     Agent responsible for fetching market data using Tushare.
     """
     print("--- DATA AGENT ---")
+    st.write("🔍 **Data Agent:** Analyzing request to identify ticker...")
     messages = state["messages"]
     last_message = messages[-1]
     provider = state.get("llm_provider")
@@ -47,81 +50,104 @@ def data_agent(state: AgentState):
         ])
         chain = extract_prompt | llm
         input_vars = {"input": last_message.content}
-        raw_response = chain.invoke(input_vars)
-        result = raw_response.content.strip()
         
-        # Store interaction for debugging
-        llm_interaction = {
-            "input": input_vars,
-            "response": raw_response.content
-        }
+        # Capture formatted messages
+        formatted_messages = extract_prompt.format_messages(**input_vars)
+        formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])
         
-        if result and result != "NONE":
-            tickers = [result]
-            # Update state with extracted ticker for future reference
-            # Note: We can't update state directly here easily without returning it, 
-            # but we will return it in the dict below.
-        else:
-            # Fallback for MVP testing if extraction fails or no ticker mentioned
-            # tickers = ["600519.SH"] 
-            return {
-                "messages": [AIMessage(content="I couldn't identify a stock ticker. Please specify one (e.g., 'Backtest on 600519.SH').")],
-                "sender": "data_agent",
-                "llm_interaction": llm_interaction
+        with st.expander("🗂️ Data Agent", expanded=True):
+            timer = render_live_timer("⏳ Extracting ticker...")
+            raw_response = chain.invoke(input_vars)
+            timer.empty()
+            
+            with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+                st.markdown("**📝 Prompt:**")
+                st.code(formatted_prompt, language="markdown")
+                st.markdown("**💬 Response:**")
+                st.code(raw_response.content, language="markdown")
+
+            result = raw_response.content.strip()
+            
+            # Store interaction for debugging
+            llm_interaction = {
+                "input": input_vars,
+                "prompt": formatted_prompt,
+                "response": raw_response.content
             }
-
-    # Initialize Tushare
-    if not Config.TUSHARE_TOKEN:
-        return {
-            "messages": [AIMessage(content="Error: Tushare token is missing in configuration.")],
-            "sender": "data_agent"
-        }
-    
-    ts.set_token(Config.TUSHARE_TOKEN)
-    pro = ts.pro_api()
-    
-    data_map = {}
-    
-    try:
-        for ticker in tickers:
-            print(f"Fetching data for {ticker}...")
-            # Fetch daily data
-            df = pro.daily(ts_code=ticker, start_date=start_date, end_date=end_date)
             
-            if df.empty:
-                print(f"No data found for {ticker}")
-                continue
+            if result and result != "NONE":
+                tickers = [result]
+                st.success(f"**Extracted Ticker:** `{result}`")
+            else:
+                st.warning("Could not identify ticker.")
+                return {
+                    "messages": [AIMessage(content="I couldn't identify a stock ticker. Please specify one (e.g., 'Backtest on 600519.SH').")],
+                    "sender": "data_agent",
+                    "llm_interaction": llm_interaction
+                }
+
+            # Initialize Tushare
+            if not Config.TUSHARE_TOKEN:
+                st.error("Tushare token missing.")
+                return {
+                    "messages": [AIMessage(content="Error: Tushare token is missing in configuration.")],
+                    "sender": "data_agent"
+                }
+            
+            st.write("⏳ Fetching data from Tushare...")
+            ts.set_token(Config.TUSHARE_TOKEN)
+            pro = ts.pro_api()
+            
+            data_map = {}
+            
+            try:
+                for ticker in tickers:
+                    print(f"Fetching data for {ticker}...")
+                    st.write(f"⬇️ **Data Agent:** Calling Tushare `daily` API for `{ticker}` ({start_date} to {end_date})...")
+                    # Fetch daily data
+                    df = pro.daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+                    
+                    if df.empty:
+                        print(f"No data found for {ticker}")
+                        st.warning(f"No data found for {ticker}")
+                        continue
+                        
+                    # Tushare returns data in descending order usually, sort by date ascending
+                    df['trade_date'] = pd.to_datetime(df['trade_date'])
+                    df = df.sort_values('trade_date')
+                    df = df.set_index('trade_date')
+                    
+                    # Keep relevant columns for VectorBT (Open, High, Low, Close, Volume)
+                    # Tushare columns: open, high, low, close, vol
+                    df = df[['open', 'high', 'low', 'close', 'vol']]
+                    df.columns = ['Open', 'High', 'Low', 'Close', 'Volume'] # Standardize for vbt
+                    
+                    data_map[ticker] = df
+                    
+                    # Show preview
+                    with st.expander(f"📊 Data Preview: {ticker}", expanded=False):
+                        st.dataframe(df.head())
+                    
+                if not data_map:
+                     st.error("Failed to fetch data.")
+                     return {
+                         "messages": [AIMessage(content=f"Failed to fetch data for {tickers}. Please check the ticker symbol.")],
+                         "sender": "data_agent"
+                     }
+
+                st.success(f"Successfully fetched data for {', '.join(tickers)}.")
                 
-            # Tushare returns data in descending order usually, sort by date ascending
-            df['trade_date'] = pd.to_datetime(df['trade_date'])
-            df = df.sort_values('trade_date')
-            df = df.set_index('trade_date')
-            
-            # Keep relevant columns for VectorBT (Open, High, Low, Close, Volume)
-            # Tushare columns: open, high, low, close, vol
-            df = df[['open', 'high', 'low', 'close', 'vol']]
-            df.columns = ['Open', 'High', 'Low', 'Close', 'Volume'] # Standardize for vbt
-            
-            data_map[ticker] = df
-            
-        if not data_map:
-             return {
-                 "messages": [AIMessage(content=f"Failed to fetch data for {tickers}. Please check the ticker symbol.")],
-                 "sender": "data_agent"
-             }
+                # Store data in state
+                return {
+                    "market_data": data_map,
+                    "messages": [AIMessage(content=f"Successfully fetched data for {', '.join(tickers)} from {start_date} to {end_date}.")],
+                    "sender": "data_agent",
+                    "llm_interaction": llm_interaction
+                }
 
-        # Store data in state (In production, might want to store path to CSV/Parquet to avoid memory issues)
-        # For MVP, we store the dict of DataFrames directly (or a serialized version if needed)
-        
-        return {
-            "market_data": data_map,
-            "messages": [AIMessage(content=f"Successfully fetched data for {', '.join(tickers)} from {start_date} to {end_date}.")],
-            "sender": "data_agent",
-            "llm_interaction": llm_interaction
-        }
-
-    except Exception as e:
-        return {
-            "messages": [AIMessage(content=f"Error fetching data: {str(e)}")],
-            "sender": "data_agent"
-        }
+            except Exception as e:
+                st.error(f"Error fetching data: {str(e)}")
+                return {
+                    "messages": [AIMessage(content=f"Error fetching data: {str(e)}")],
+                    "sender": "data_agent"
+                }

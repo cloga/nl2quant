@@ -1,13 +1,16 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage
+import streamlit as st
 from app.llm import get_llm
 from app.state import AgentState
+from app.ui_utils import render_live_timer
 
 def quant_agent(state: AgentState):
     """
     Agent responsible for generating VectorBT strategy code.
     """
     print("--- QUANT AGENT ---")
+    st.write("🧠 **Quant Agent:** Designing strategy logic...")
     provider = state.get("llm_provider")
     model = state.get("llm_model")
     llm = get_llm(provider=provider, model=model)
@@ -66,17 +69,33 @@ def quant_agent(state: AgentState):
         "feedback": feedback
     }
     
-    response = chain.invoke(input_vars)
+    # Capture formatted messages
+    formatted_messages = prompt.format_messages(**input_vars)
+    formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])
     
-    code = response.content.strip()
-    
-    # Clean up markdown if the LLM ignored instructions
-    if code.startswith("```python"):
-        code = code.split("```python")[1]
-    if code.startswith("```"):
-        code = code.split("```")[1]
-    if code.endswith("```"):
-        code = code.rsplit("```", 1)[0]
+    with st.expander("📈 Quant Agent", expanded=True):
+        timer = render_live_timer("⏳ Generating strategy code...")
+        response = chain.invoke(input_vars)
+        timer.empty()
+        
+        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+            st.markdown("**📝 Prompt:**")
+            st.code(formatted_prompt, language="markdown")
+            st.markdown("**💬 Response:**")
+            st.code(response.content, language="python")
+
+        code = response.content.strip()
+        
+        # Clean up markdown if the LLM ignored instructions
+        if code.startswith("```python"):
+            code = code.split("```python")[1]
+        if code.startswith("```"):
+            code = code.split("```")[1]
+        if code.endswith("```"):
+            code = code.rsplit("```", 1)[0]
+            
+        st.markdown("#### 💻 Generated Code")
+        st.code(code, language="python")
         
     return {
         "strategy_code": code,
@@ -84,6 +103,7 @@ def quant_agent(state: AgentState):
         "sender": "quant_agent",
         "llm_interaction": {
             "input": input_vars,
+            "prompt": formatted_prompt,
             "response": response.content
         }
     }

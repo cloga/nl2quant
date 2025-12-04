@@ -3,14 +3,17 @@ from langchain_core.messages import AIMessage
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+import streamlit as st
 from app.llm import get_llm
 from app.state import AgentState
+from app.ui_utils import render_live_timer
 
 def analyst_agent(state: AgentState):
     """
     Agent responsible for summarizing the backtest results and generating visualizations.
     """
     print("--- ANALYST AGENT ---")
+    st.write("🧐 **Analyst Agent:** Analyzing results...")
     provider = state.get("llm_provider")
     model = state.get("llm_model")
     llm = get_llm(provider=provider, model=model)
@@ -30,6 +33,7 @@ def analyst_agent(state: AgentState):
         df = market_data[first_ticker]
         
         if not df.empty and all(col in df.columns for col in ['Open', 'High', 'Low', 'Close']):
+            st.write(f"📊 **Analyst Agent:** Generating K-Line chart for {first_ticker}...")
             fig_kline = go.Figure(data=[go.Candlestick(x=df.index,
                             open=df['Open'],
                             high=df['High'],
@@ -108,8 +112,35 @@ def analyst_agent(state: AgentState):
         "data_info": data_info
     }
     
-    response = chain.invoke(input_vars)
+    # Capture formatted messages
+    formatted_messages = prompt.format_messages(**input_vars)
+    formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])
     
+    with st.expander("🧐 Analyst Agent", expanded=True):
+        timer = render_live_timer("⏳ Generating analysis summary...")
+        response = chain.invoke(input_vars)
+        timer.empty()
+        
+        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+            st.markdown("**📝 Prompt:**")
+            st.code(formatted_prompt, language="markdown")
+            st.markdown("**💬 Response:**")
+            st.code(response.content, language="markdown")
+        
+        st.markdown("#### 📝 Summary")
+        st.markdown(response.content)
+        
+        if analyst_figures:
+            st.markdown("#### 📊 Charts")
+            for fig in analyst_figures:
+                st.plotly_chart(fig, use_container_width=True)
+                
+        if analyst_data:
+            st.markdown("#### 📋 Data")
+            for title, df in analyst_data.items():
+                st.write(f"**{title}**")
+                st.dataframe(df)
+
     return {
         "messages": [response],
         "sender": "analyst_agent",
@@ -117,6 +148,7 @@ def analyst_agent(state: AgentState):
         "analyst_data": analyst_data,
         "llm_interaction": {
             "input": input_vars,
+            "prompt": formatted_prompt,
             "response": response.content
         }
     }
