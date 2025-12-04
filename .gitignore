@@ -1,0 +1,36 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.log
+
+# Virtual environments
+.env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code
+.vscode/
+
+# Streamlit
+.streamlit/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# Data & cache
+*.csv
+*.parquet
+*.sqlite
+cache/
+
+# OS specific
+.DS_Store
+Thumbs.db

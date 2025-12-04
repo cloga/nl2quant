@@ -1,0 +1,13 @@
+streamlit
+langchain
+langgraph
+langchain-openai
+langchain-community
+tushare
+pandas
+vectorbt
+plotly
+python-dotenv
+matplotlib
+scipy
+tables
