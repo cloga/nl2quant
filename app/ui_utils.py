@@ -89,3 +89,16 @@ def render_live_timer(label_text, start_time=None):
         components.html(html_code, height=40)
         
     return placeholder
+
+def display_token_usage(response):
+    """
+    Displays token usage information from the LLM response.
+    """
+    if hasattr(response, "response_metadata"):
+        token_usage = response.response_metadata.get("token_usage")
+        if token_usage:
+            prompt_tokens = token_usage.get("prompt_tokens", 0)
+            completion_tokens = token_usage.get("completion_tokens", 0)
+            total_tokens = token_usage.get("total_tokens", 0)
+            
+            st.caption(f"🪙 Token Usage: Input: {prompt_tokens} | Output: {completion_tokens} | Total: {total_tokens}")

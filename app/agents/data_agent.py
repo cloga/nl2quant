@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 from app.config import Config
 from app.state import AgentState
-from app.ui_utils import render_live_timer
+from app.ui_utils import render_live_timer, display_token_usage
 from langchain_core.messages import AIMessage
 
 def data_agent(state: AgentState):
@@ -59,6 +59,8 @@ def data_agent(state: AgentState):
             timer = render_live_timer("⏳ Extracting ticker...")
             raw_response = chain.invoke(input_vars)
             timer.empty()
+            
+            display_token_usage(raw_response)
             
             with st.expander("🧠 View Raw Prompt & Response", expanded=False):
                 st.markdown("**📝 Prompt:**")

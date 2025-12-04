@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 from app.llm import get_llm
 from app.state import AgentState
-from app.ui_utils import render_live_timer
+from app.ui_utils import render_live_timer, display_token_usage
 
 def analyst_agent(state: AgentState):
     """
@@ -120,6 +120,8 @@ def analyst_agent(state: AgentState):
         timer = render_live_timer("⏳ Generating analysis summary...")
         response = chain.invoke(input_vars)
         timer.empty()
+        
+        display_token_usage(response)
         
         with st.expander("🧠 View Raw Prompt & Response", expanded=False):
             st.markdown("**📝 Prompt:**")
