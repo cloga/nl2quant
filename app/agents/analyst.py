@@ -196,42 +196,124 @@ def analyst_agent(state: AgentState):
                 analyst_data["Correlation Matrix"] = corr
 
     # --- LLM Summary Logic ---
+    # Determine which prompt to use based on mode
+    if optimization_mode and optimization_results:
+        # Optimization Mode Prompt
+        system_prompt = """You are a Senior Quantitative Research Analyst specializing in strategy optimization.
+
+## Task: Analyze Parameter Optimization Results
+
+You are reviewing a parameter sweep optimization for a trading strategy.
+
+### Optimization Results:
+{optimization_info}
+
+### Analysis Guidelines:
+1. **最优参数分析**：
+   - 识别最优参数组合及其指标表现
+   - 分析参数敏感性（参数微调对收益的影响）
+   
+2. **参数稳健性**：
+   - 评估参数是否过拟合（是否只在特定区间表现好）
+   - 分析热力图中的"甜点区"分布
+   
+3. **风险警示**：
+   - 指出可能的过拟合风险
+   - 建议样本外测试验证
+   
+4. **实施建议**：
+   - 给出推荐的参数范围（而非单一最优值）
+   - 建议后续的验证步骤
+
+### Base Metrics (if available):
+{metrics}
+
+### Market Data Info:
+{data_info}
+
+Output Requirements:
+- 所有输出必须使用简体中文。
+- 使用"参数优化报告"作为主标题。
+"""
+        
+    elif benchmark_metrics:
+        # Benchmark Comparison Mode Prompt  
+        system_prompt = """You are a Senior Portfolio Analyst specializing in benchmark comparison and alpha analysis.
+
+## Task: Analyze Strategy Performance vs Benchmark
+
+### Benchmark Comparison Metrics:
+{benchmark_info}
+
+### Analysis Guidelines:
+1. **相对表现评估**：
+   - Alpha值解读（策略超额收益能力）
+   - Beta分析（系统性风险暴露）
+   - 信息比率评估（主动管理效率）
+   
+2. **风险特征对比**：
+   - 跟踪误差分析
+   - 相关性解读
+   - 策略独立性评估
+   
+3. **归因分析**：
+   - 超额收益来源分析
+   - 择时vs选股贡献
+   
+4. **投资建议**：
+   - 策略定位（替代基准/增强收益/绝对收益）
+   - 风险预算建议
+
+### Strategy Metrics:
+{metrics}
+
+### Market Data Info:
+{data_info}
+
+Output Requirements:
+- 所有输出必须使用简体中文。
+- 使用"策略对标分析报告"作为主标题。
+"""
+    else:
+        # Standard Mode Prompt
+        system_prompt = """You are a Senior Financial Analyst.
+
+Scenario 1: Backtest Results Available
+- If 'Metrics' contain values (not empty, not "{}", not "None"), interpret the backtest results and provide a comprehensive professional assessment.
+- Focus on:
+    * **风险调整收益**：Sharpe Ratio、Sortino Ratio、Calmar Ratio。
+    * **回撤情况**：最大回撤的深度与持续时间。
+    * **交易统计**：胜率、利润因子、期望收益、SQN 等。
+- 报告结构：
+    1. **执行摘要**（给出通过/需改进等结论）。
+    2. **收益与风险分析**。
+    3. **交易质量分析**。
+    4. **风险评估**。
+
+Scenario 2: Only Market Data or Metrics Missing
+- 如果 'Metrics' 为空、为 "{}"、为 "None"，或总体缺失，则说明本次任务仅为行情/数据分析。
+- 在这种情况下：
+    * 禁止使用"策略"、"回测"等字眼；也不要编造不存在的执行结果。
+    * 使用 **数据概览** 作为首个小节标题，聚焦以下要点：
+        1. **趋势分析**：结合价格与均线判断多空趋势。
+        2. **波动性**：描述价格波动幅度与稳定性。
+        3. **关键价位**：指出重要支撑/阻力。
+        4. **成交量分析**：若有成交量，描述量能变化。
+        5. **短期观点**：给出偏多/偏空/中性判断及理由。
+
+Output Requirements
+- 所有输出必须使用简体中文。
+- 根据所处场景合理设置段落标题，避免与事实不符的措辞。
+
+Metrics: {metrics}
+Logs: {logs}
+Market Data Info: {data_info}
+"""
+
     prompt = ChatPromptTemplate.from_messages([
-                ("system", """You are a Senior Financial Analyst.
-        
-                Scenario 1: Backtest Results Available
-                - If 'Metrics' contain values (not empty, not "{}", not "None"), interpret the backtest results and provide a comprehensive professional assessment.
-                - Focus on:
-                    * **风险调整收益**：Sharpe Ratio、Sortino Ratio、Calmar Ratio。
-                    * **回撤情况**：最大回撤的深度与持续时间。
-                    * **交易统计**：胜率、利润因子、期望收益、SQN 等。
-                - 报告结构：
-                    1. **执行摘要**（给出通过/需改进等结论）。
-                    2. **收益与风险分析**。
-                    3. **交易质量分析**。
-                    4. **风险评估**。
-        
-                Scenario 2: Only Market Data or Metrics Missing
-                - 如果 'Metrics' 为空、为 "{}"、为 "None"，或总体缺失，则说明本次任务仅为行情/数据分析。
-                - 在这种情况下：
-                    * 禁止使用“策略”、“回测”等字眼；也不要编造不存在的执行结果。
-                    * 使用 **数据概览** 作为首个小节标题，聚焦以下要点：
-                        1. **趋势分析**：结合价格与均线判断多空趋势。
-                        2. **波动性**：描述价格波动幅度与稳定性。
-                        3. **关键价位**：指出重要支撑/阻力。
-                        4. **成交量分析**：若有成交量，描述量能变化。
-                        5. **短期观点**：给出偏多/偏空/中性判断及理由。
-        
-                Output Requirements
-                - 所有输出必须使用简体中文。
-                - 根据所处场景合理设置段落标题，避免与事实不符的措辞。
-        
-                Metrics: {metrics}
-                Logs: {logs}
-                Market Data Info: {data_info}
-                """),
-                ("user", "Please summarize the performance or data.")
-        ])
+        ("system", system_prompt),
+        ("user", "Please summarize the performance or data.")
+    ])
     
     # Create a summary of data if available
     data_info = "No data available"
@@ -263,11 +345,36 @@ def analyst_agent(state: AgentState):
 
     chain = prompt | llm
     
+    # Build input variables based on the mode
     input_vars = {
         "metrics": str(metrics),
         "logs": logs,
         "data_info": data_info
     }
+    
+    # Add mode-specific variables
+    if optimization_mode and optimization_results:
+        # Format optimization results for the prompt
+        opt_info_parts = []
+        if isinstance(optimization_results, dict):
+            if 'best_params' in optimization_results:
+                opt_info_parts.append(f"最优参数: {optimization_results['best_params']}")
+            if 'best_metrics' in optimization_results:
+                opt_info_parts.append(f"最优指标: {optimization_results['best_metrics']}")
+            if 'param_sweep_summary' in optimization_results:
+                opt_info_parts.append(f"参数扫描摘要: {optimization_results['param_sweep_summary']}")
+        input_vars["optimization_info"] = "\n".join(opt_info_parts) if opt_info_parts else str(optimization_results)
+        
+    elif benchmark_metrics:
+        # Format benchmark metrics for the prompt
+        benchmark_info_parts = []
+        if isinstance(benchmark_metrics, dict):
+            for key, value in benchmark_metrics.items():
+                if isinstance(value, float):
+                    benchmark_info_parts.append(f"{key}: {value:.4f}")
+                else:
+                    benchmark_info_parts.append(f"{key}: {value}")
+        input_vars["benchmark_info"] = "\n".join(benchmark_info_parts) if benchmark_info_parts else str(benchmark_metrics)
     
     # Capture formatted messages
     formatted_messages = prompt.format_messages(**input_vars)
