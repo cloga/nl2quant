@@ -173,6 +173,13 @@ def quant_agent(state: AgentState):
             st.session_state[code_key] = final_code
             st.success("Code confirmed! Proceeding to execution...")
             
+            # Mask sensitive fields in input_vars before storing
+            safe_input = dict(input_vars)
+            for kk in list(safe_input.keys()):
+                lk = kk.lower()
+                if 'token' in lk or 'api_key' in lk or 'secret' in lk or 'password' in lk:
+                    safe_input[kk] = '***MASKED***'
+
             return {
                 "strategy_code": final_code,
                 "user_edited_code": final_code if final_code != code else None,
@@ -181,7 +188,7 @@ def quant_agent(state: AgentState):
                 "messages": [AIMessage(content="Generated strategy code (user confirmed).")],
                 "sender": "quant_agent",
                 "llm_interaction": {
-                    "input": input_vars,
+                    "input": safe_input,
                     "prompt": formatted_prompt,
                     "response": response.content
                 }
@@ -197,8 +204,9 @@ def quant_agent(state: AgentState):
                 "messages": [AIMessage(content="Code generated. Waiting for user confirmation.")],
                 "sender": "quant_agent",
                 "next_step": "WAIT_FOR_CONFIRMATION",
+                # Mask sensitive fields in input_vars before storing
                 "llm_interaction": {
-                    "input": input_vars,
+                    "input": {k: ('***MASKED***' if any(x in k.lower() for x in ['token','api_key','secret','password']) else v) for k,v in input_vars.items()},
                     "prompt": formatted_prompt,
                     "response": response.content
                 }
