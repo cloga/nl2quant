@@ -31,7 +31,21 @@ NL-to-Quant is an AI-powered platform that enables users to perform financial an
     cd nl-to-quant
     ```
 
-2.  **Install dependencies**:
+2.  **Create and Activate Virtual Environment**:
+    It's recommended to use a virtual environment to manage dependencies.
+
+    *   **Windows**:
+        ```powershell
+        python -m venv venv
+        .\venv\Scripts\Activate.ps1
+        ```
+    *   **macOS/Linux**:
+        ```bash
+        python3 -m venv venv
+        source venv/bin/activate
+        ```
+
+3.  **Install dependencies**:
     ```bash
     pip install -r requirements.txt
     ```

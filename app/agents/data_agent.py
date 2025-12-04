@@ -13,6 +13,7 @@ def data_agent(state: AgentState):
     last_message = messages[-1]
     provider = state.get("llm_provider")
     model = state.get("llm_model")
+    llm_interaction = None
     
     # In a real scenario, we would use an LLM to extract these parameters.
     # Let's use the LLM to extract the ticker if not present.
@@ -28,11 +29,32 @@ def data_agent(state: AgentState):
         
         llm = get_llm(provider=provider, model=model)
         extract_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a financial entity extractor. Extract the stock ticker (e.g., 600519.SH, AAPL) from the user input. Return ONLY the ticker symbol. If none found, return 'NONE'."),
+            ("system", """You are a financial entity extractor. 
+            Your task is to identify the stock ticker from the user's input.
+            
+            Rules:
+            1. If the user provides a ticker (e.g., 600519.SH, 000001.SZ, AAPL), use it directly.
+            2. If the user provides a company name (e.g., 'Moutai', 'Ningde Times', 'Ping An'), convert it to the most likely ticker symbol.
+               - Prefer Chinese A-shares (Shanghai .SH, Shenzhen .SZ) if the name is Chinese.
+               - Examples: 
+                 - 'Moutai' -> '600519.SH'
+                 - 'Ningde Times' / 'CATL' -> '300750.SZ'
+                 - 'Ping An' -> '601318.SH'
+            3. Return ONLY the ticker symbol. No other text.
+            4. If absolutely no ticker or company name is found, return 'NONE'.
+            """),
             ("user", "{input}")
         ])
         chain = extract_prompt | llm
-        result = chain.invoke({"input": last_message.content}).content.strip()
+        input_vars = {"input": last_message.content}
+        raw_response = chain.invoke(input_vars)
+        result = raw_response.content.strip()
+        
+        # Store interaction for debugging
+        llm_interaction = {
+            "input": input_vars,
+            "response": raw_response.content
+        }
         
         if result and result != "NONE":
             tickers = [result]
@@ -43,12 +65,17 @@ def data_agent(state: AgentState):
             # Fallback for MVP testing if extraction fails or no ticker mentioned
             # tickers = ["600519.SH"] 
             return {
-                "messages": [AIMessage(content="I couldn't identify a stock ticker. Please specify one (e.g., 'Backtest on 600519.SH').")]
+                "messages": [AIMessage(content="I couldn't identify a stock ticker. Please specify one (e.g., 'Backtest on 600519.SH').")],
+                "sender": "data_agent",
+                "llm_interaction": llm_interaction
             }
 
     # Initialize Tushare
     if not Config.TUSHARE_TOKEN:
-        return {"messages": [AIMessage(content="Error: Tushare token is missing in configuration.")]}
+        return {
+            "messages": [AIMessage(content="Error: Tushare token is missing in configuration.")],
+            "sender": "data_agent"
+        }
     
     ts.set_token(Config.TUSHARE_TOKEN)
     pro = ts.pro_api()
@@ -78,15 +105,23 @@ def data_agent(state: AgentState):
             data_map[ticker] = df
             
         if not data_map:
-             return {"messages": [AIMessage(content=f"Failed to fetch data for {tickers}. Please check the ticker symbol.")]}
+             return {
+                 "messages": [AIMessage(content=f"Failed to fetch data for {tickers}. Please check the ticker symbol.")],
+                 "sender": "data_agent"
+             }
 
         # Store data in state (In production, might want to store path to CSV/Parquet to avoid memory issues)
         # For MVP, we store the dict of DataFrames directly (or a serialized version if needed)
         
         return {
             "market_data": data_map,
-            "messages": [AIMessage(content=f"Successfully fetched data for {', '.join(tickers)} from {start_date} to {end_date}.")]
+            "messages": [AIMessage(content=f"Successfully fetched data for {', '.join(tickers)} from {start_date} to {end_date}.")],
+            "sender": "data_agent",
+            "llm_interaction": llm_interaction
         }
 
     except Exception as e:
-        return {"messages": [AIMessage(content=f"Error fetching data: {str(e)}")]}
+        return {
+            "messages": [AIMessage(content=f"Error fetching data: {str(e)}")],
+            "sender": "data_agent"
+        }

@@ -22,6 +22,12 @@ def quant_agent(state: AgentState):
     
     data_keys = list(state.get("market_data", {}).keys())
     
+    # Check for feedback/errors from previous runs
+    exec_output = state.get("execution_output", "")
+    feedback = ""
+    if exec_output and ("Error" in exec_output or "Traceback" in exec_output):
+        feedback = f"\n\nPREVIOUS EXECUTION FAILED. FIX THE CODE BASED ON THIS ERROR:\n{exec_output[-1000:]}"
+    
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are an expert Python Quant Developer using the `vectorbt` library.
         Your goal is to generate executable Python code that backtests a trading strategy described by the user.
@@ -37,8 +43,9 @@ def quant_agent(state: AgentState):
         2. The code MUST define a variable named `portfolio` which is the result of `vbt.Portfolio.from_signals(...)` or similar.
         3. Do NOT fetch data. Use `data_map['TICKER']` to access data.
         4. If multiple tickers are present, handle them appropriately (or just pick the first one if the strategy is single-asset).
-        5. Return ONLY the Python code. No markdown formatting, no ```python blocks.
-        6. Ensure the code is safe and does not use system calls.
+        5. ALWAYS pass `freq='1D'` to `vbt.Portfolio.from_signals` or `from_orders` to avoid frequency inference errors with daily data.
+        6. Return ONLY the Python code. No markdown formatting, no ```python blocks.
+        7. Ensure the code is safe and does not use system calls.
         
         Example Snippet:
         price = data_map['600519.SH']['Close']
@@ -46,17 +53,20 @@ def quant_agent(state: AgentState):
         slow_ma = vbt.MA.run(price, 50)
         entries = fast_ma.ma_crossed_above(slow_ma)
         exits = fast_ma.ma_crossed_below(slow_ma)
-        portfolio = vbt.Portfolio.from_signals(price, entries, exits)
+        portfolio = vbt.Portfolio.from_signals(price, entries, exits, freq='1D')
         """),
-        ("user", "{input}")
+        ("user", "{input}{feedback}")
     ])
     
     chain = prompt | llm
     
-    response = chain.invoke({
+    input_vars = {
         "input": user_request,
-        "tickers": data_keys
-    })
+        "tickers": data_keys,
+        "feedback": feedback
+    }
+    
+    response = chain.invoke(input_vars)
     
     code = response.content.strip()
     
@@ -70,5 +80,10 @@ def quant_agent(state: AgentState):
         
     return {
         "strategy_code": code,
-        "messages": [AIMessage(content="Generated strategy code.")]
+        "messages": [AIMessage(content="Generated strategy code.")],
+        "sender": "quant_agent",
+        "llm_interaction": {
+            "input": input_vars,
+            "response": response.content
+        }
     }

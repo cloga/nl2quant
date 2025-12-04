@@ -1,0 +1,15 @@
+{
+  "id": "73e8ee23-8138-44ed-8dd9-6f113d36064c",
+  "title": "获取中国平安(601318.SH)的数据...",
+  "timestamp": "2025-12-04T23:00:03.693315",
+  "messages": [
+    {
+      "role": "user",
+      "content": "获取中国平安(601318.SH)的数据并展示收盘价"
+    },
+    {
+      "role": "assistant",
+      "content": "**Backtest Summary**\n\nThe backtest could not produce performance metrics due to an execution error:\n\n```\nError: Index frequency is None. Pass it as `freq` or define it globally under `settings.array_wrapper`.\n```\n\nThis error indicates that the time‑series index used in the backtest does not have an associated frequency (e.g., daily, hourly). Without a known frequency, the library cannot annualize metrics such as the Sharpe ratio, total return, or drawdown calculations.\n\n**Suggested Fix**  \nSpecify the data frequency explicitly by passing the `freq` parameter (e.g., `freq='D'` for daily) or set it globally using the `settings.array_wrapper` configuration. Once the frequency is provided, the backtest can compute the expected metrics (Sharpe, return, drawdown, etc.)."
+    }
+  ]
+}

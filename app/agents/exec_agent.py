@@ -16,6 +16,10 @@ def exec_agent(state: AgentState):
     code = state["strategy_code"]
     market_data = state["market_data"]
     
+    # Set default frequency for vectorbt to avoid "Index frequency is None" error
+    # This is a fallback in case the generated code doesn't specify it.
+    vbt.settings.array_wrapper['freq'] = '1D'
+    
     # Prepare the execution environment
     # We inject 'vbt', 'pd', 'np' and the 'data_map'
     local_scope = {
@@ -59,16 +63,21 @@ def exec_agent(state: AgentState):
                 "execution_output": output_buffer.getvalue(),
                 "performance_metrics": metrics,
                 "figure_json": fig, # Storing the actual Figure object for now for simplicity in Streamlit
-                "messages": [AIMessage(content="Strategy executed successfully.")]
+                "messages": [AIMessage(content="Strategy executed successfully.")],
+                "sender": "exec_agent"
             }
         else:
             return {
-                "execution_output": output_buffer.getvalue(),
-                "messages": [AIMessage(content="Error: The code did not define a 'portfolio' variable.")]
+                "execution_output": output_buffer.getvalue() + "\nError: The code did not define a 'portfolio' variable.",
+                "messages": [AIMessage(content="Error: The code did not define a 'portfolio' variable.")],
+                "sender": "exec_agent"
             }
             
     except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
         return {
-            "execution_output": output_buffer.getvalue() + f"\nError: {str(e)}",
-            "messages": [AIMessage(content=f"Execution failed: {str(e)}")]
+            "execution_output": output_buffer.getvalue() + f"\nExecution Error:\n{tb}",
+            "messages": [AIMessage(content=f"Execution failed: {str(e)}")],
+            "sender": "exec_agent"
         }
