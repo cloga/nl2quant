@@ -5,6 +5,8 @@ from app.agents.quant_agent import quant_agent
 from app.agents.exec_agent import exec_agent
 from app.agents.analyst import analyst_agent
 from app.agents.planner import planner_agent
+from app.agents.macro_agent import macro_agent
+from app.agents.valuation_agent import valuation_agent
 
 def create_graph():
     workflow = StateGraph(AgentState)
@@ -15,6 +17,8 @@ def create_graph():
     workflow.add_node("quant_agent", quant_agent)
     workflow.add_node("exec_agent", exec_agent)
     workflow.add_node("analyst_agent", analyst_agent)
+    workflow.add_node("macro_agent", macro_agent)
+    workflow.add_node("valuation_agent", valuation_agent)
 
     # Define Edges
     # The Planner decides the next step
@@ -29,6 +33,8 @@ def create_graph():
             "quant_agent": "quant_agent",
             "exec_agent": "exec_agent",
             "analyst_agent": "analyst_agent",
+            "macro_agent": "macro_agent",
+            "valuation_agent": "valuation_agent",
             "FINISH": END
         }
     )
@@ -38,5 +44,7 @@ def create_graph():
     workflow.add_edge("quant_agent", "planner_agent")
     workflow.add_edge("exec_agent", "planner_agent")
     workflow.add_edge("analyst_agent", "planner_agent")
+    workflow.add_edge("macro_agent", "planner_agent")
+    workflow.add_edge("valuation_agent", "planner_agent")
 
     return workflow.compile()

@@ -60,15 +60,6 @@ def exec_agent(state: AgentState):
     """
     print("--- EXEC AGENT ---")
     
-    # Check if code is confirmed (Human-in-the-Loop)
-    if not state.get("code_confirmed", True):
-        st.warning("⏸️ Code not confirmed yet. Please confirm the code in Quant Agent first.")
-        return {
-            "messages": [AIMessage(content="Waiting for code confirmation.")],
-            "sender": "exec_agent",
-            "next_step": "WAIT_FOR_CONFIRMATION"
-        }
-    
     optimization_mode = state.get("optimization_mode", False)
     
     with st.expander("⚙️ Exec Agent", expanded=True):
@@ -78,6 +69,10 @@ def exec_agent(state: AgentState):
         code = state["strategy_code"]
         market_data = state["market_data"]
         benchmark_data = state.get("benchmark_data", {})
+
+        # Display the exact code that will be executed for transparency/debugging
+        with st.expander("💻 Strategy Code (to execute)", expanded=False):
+            st.code(code, language="python")
         
         # Set default frequency for vectorbt to avoid "Index frequency is None" error
         vbt.settings.array_wrapper['freq'] = '1D'

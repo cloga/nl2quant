@@ -7,21 +7,18 @@ The **NL-to-Quant Platform** is an AI-powered tool that allows users to perform 
 
 The system follows a **Multi-Agent Architecture** orchestrated by **LangGraph**. It operates as a state machine where a shared state is passed between specialized agents.
 
-### High-Level Workflow
-```mermaid
-graph TD
-    User[User Input] --> DataAgent
-    DataAgent -->|Success| QuantAgent
-    DataAgent -->|Fail| End
-    QuantAgent --> ExecAgent
-    ExecAgent --> AnalystAgent
-    AnalystAgent --> End
-```
+### High-Level Workflow (Planner-Orchestrated)
+- User request enters **Planner Agent** for intent识别与路由（data / quant / macro / valuation / analyst / finish），支持 slash 前缀强制直达（/data, /quant, /exec, /analyst, /macro, /valuation）。
+- Planner 调用对应 Agent：
+    - Data → Quant → Exec → Analyst（回测链路）
+    - Macro（宏观解读）
+    - Valuation（估值/相对位置，需要行情数据）
+    - News/Other → 直接结束并提示能力范围
 
 ### Core Components
 1.  **Frontend (Streamlit):** Handles user chat input and renders interactive Plotly charts.
 2.  **Orchestrator (LangGraph):** Manages the flow of control between agents.
-3.  **Agents:** Specialized modules for specific tasks (Data, Coding, Execution, Analysis).
+3.  **Agents:** Specialized modules for specific tasks (Data, Coding, Execution, Analysis, Macro, Valuation).
 
 ## 3. Agent Specifications
 
@@ -63,6 +60,18 @@ graph TD
     *   Explains any errors if execution failed.
 *   **Output:** A final text response to the user.
 
+### 3.5. Macro Agent (`app/agents/macro_agent.py`)
+*   **Role:** "Macro Strategist". 提供结构化宏观解读（现状/逻辑/风险/观察/行动框架）。
+*   **Input:** 用户最近一条人类消息。
+*   **Logic:** 纯 LLM 生成，不拉取外部数据；保持泛化表述，提示关注点和仓位/风格倾向。
+*   **Output:** 宏观要点文本（`messages`）。
+
+### 3.6. Valuation Agent (`app/agents/valuation_agent.py`)
+*   **Role:** "Valuation/Relative Position". 用价格分位做简易性价比定位。
+*   **Input:** `market_data`（需含 Close）。
+*   **Logic:** 计算当前价格在样本期的百分位，给出偏低/中性/偏高标签，并可画线图预览。
+*   **Output:** `valuation` 摘要与提示；若无数据则提示先取数。
+
 ## 4. Data Flow & State Management
 
 The system uses a typed dictionary `AgentState` to maintain context across the graph.
@@ -78,6 +87,7 @@ class AgentState(TypedDict):
     execution_output: Optional[str]     # Stdout logs
     performance_metrics: Optional[Dict] # Key metrics (Sharpe, etc.)
     figure_json: Optional[str]          # Plotly figure JSON
+    valuation: Optional[Dict]          # Valuation/relative-position summary
 ```
 
 ## 5. Technology Stack

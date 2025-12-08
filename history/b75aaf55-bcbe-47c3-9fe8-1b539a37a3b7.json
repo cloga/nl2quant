@@ -1,0 +1,15 @@
+{
+  "id": "b75aaf55-bcbe-47c3-9fe8-1b539a37a3b7",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T07:19:32.904363",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "请问您想查询什么？例如：股票 /stock 588000，基金 /fund 588000，或数据 /data 588000？"
+    }
+  ]
+}

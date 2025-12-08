@@ -43,6 +43,7 @@ def quant_agent(state: AgentState):
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are an expert Python Quant Developer using the `vectorbt` library.
             Your goal is to generate executable Python code that performs a PARAMETER OPTIMIZATION for a trading strategy.
+            Avoid defaulting to MA crossover; choose parameters meaningful to the chosen template.
             
             Context:
             - The data is already loaded into a dictionary named `data_map`.
@@ -50,60 +51,83 @@ def quant_agent(state: AgentState):
             - Each value in `data_map` is a Pandas DataFrame with columns: Open, High, Low, Close, Volume.
             - The index is a DatetimeIndex.
             
+            Strategy menu (pick one that matches the request, otherwise vary):
+            - RSI thresholds sweep (windows and bands).
+            - Bollinger band width/alpha sweep.
+            - Donchian breakout window sweep.
+            - MACD fast/slow/signal sweep.
+            - MA crossover only if explicitly asked.
+            
             Requirements for Parameter Optimization:
             1. Use `vectorbt` (imported as `vbt`) for the backtest.
-            2. Define parameter ranges using numpy arrays (e.g., `fast_windows = np.arange(5, 25, 5)`, `slow_windows = np.arange(20, 60, 10)`).
-            3. Use vectorbt's broadcasting capability to test all parameter combinations at once.
+            2. Define parameter ranges using numpy arrays (e.g., windows = np.arange(10, 60, 5)).
+            3. Use vectorbt's broadcasting to test all combinations.
             4. The code MUST define:
-               - `portfolio`: The result of `vbt.Portfolio.from_signals(...)` with parameter combinations.
-               - `param_names`: A list of parameter names, e.g., `['fast_window', 'slow_window']`
-               - `param_values`: A dict mapping param names to their tested values, e.g., {{'fast_window': fast_windows, 'slow_window': slow_windows}}
-            5. ALWAYS pass `freq='1D'` to avoid frequency inference errors.
+               - `portfolio`: result of `vbt.Portfolio.from_signals(...)` with parameter grids.
+               - `param_names`: list of parameter names.
+               - `param_values`: dict mapping param names to tested arrays.
+            5. ALWAYS pass `freq='1D'`.
             6. Return ONLY the Python code. No markdown formatting, no ```python blocks.
             
-            Example for MA Crossover Optimization:
+            Example idea (MACD sweep, adjust to user need):
             price = data_map['600519.SH']['Close']
-            fast_windows = np.arange(5, 25, 5)
-            slow_windows = np.arange(20, 60, 10)
-            fast_ma, slow_ma = vbt.MA.run_combs(price, window=fast_windows, r=2, short_names=['fast', 'slow'])
-            entries = fast_ma.ma_crossed_above(slow_ma)
-            exits = fast_ma.ma_crossed_below(slow_ma)
+            fast = np.arange(8, 18, 2)
+            slow = np.arange(20, 40, 4)
+            signal = np.arange(6, 12, 2)
+            macd = vbt.MACD.run(price, fast_window=fast, slow_window=slow, signal_window=signal)
+            entries = macd.macd_above_signal()
+            exits = macd.macd_below_signal()
             portfolio = vbt.Portfolio.from_signals(price, entries, exits, freq='1D')
-            param_names = ['fast_window', 'slow_window']
-            param_values = {{'fast_window': fast_windows, 'slow_window': slow_windows}}
+            param_names = ['fast_window', 'slow_window', 'signal_window']
+            param_values = {{'fast_window': fast, 'slow_window': slow, 'signal_window': signal}}
             """),
             ("user", "{input}{feedback}")
         ])
     else:
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert Python Quant Developer using the `vectorbt` library.
-            Your goal is to generate executable Python code that backtests a trading strategy described by the user.
+                prompt = ChatPromptTemplate.from_messages([
+                        ("system", """You are an expert Python Quant Developer using the `vectorbt` library.
+                        Your goal is to generate executable Python code that backtests a trading strategy described by the user.
+                        Avoid always using moving-average crossover unless the user explicitly asks for it; select a strategy that matches intent or pick a diversified template.
             
-            Context:
-            - The data is already loaded into a dictionary named `data_map`.
-            - `data_map` keys are tickers: {tickers}
-            - Each value in `data_map` is a Pandas DataFrame with columns: Open, High, Low, Close, Volume.
-            - The index is a DatetimeIndex.
+                        Context:
+                        - The data is already loaded into a dictionary named `data_map`.
+                        - `data_map` keys are tickers: {tickers}
+                        - Each value in `data_map` is a Pandas DataFrame with columns: Open, High, Low, Close, Volume.
+                        - The index is a DatetimeIndex.
             
-            Requirements:
-            1. Use `vectorbt` (imported as `vbt`) for the backtest.
-            2. The code MUST define a variable named `portfolio` which is the result of `vbt.Portfolio.from_signals(...)` or similar.
-            3. Do NOT fetch data. Use `data_map['TICKER']` to access data.
-            4. If multiple tickers are present, handle them appropriately (or just pick the first one if the strategy is single-asset).
-            5. ALWAYS pass `freq='1D'` to `vbt.Portfolio.from_signals` or `from_orders` to avoid frequency inference errors with daily data.
-            6. Return ONLY the Python code. No markdown formatting, no ```python blocks.
-            7. Ensure the code is safe and does not use system calls.
+                        Strategy menu (choose the one best aligned to the request, otherwise vary from this list):
+                        - RSI mean reversion: use `vbt.RSI.run`, enter when RSI < 30, exit when RSI > 70 (or user thresholds).
+                        - Bollinger band fade: `vbt.BBANDS.run`, enter when Close < lower, exit when Close > upper.
+                        - Donchian breakout / high-low channel: `vbt.DonchianChannel.run`, breakout entries/exits.
+                        - MACD trend: `vbt.MACD.run`, signal/line cross.
+                        - VWAP/volume filter: use rolling VWAP or volume spike filter.
+                        - MA crossover only if user mentions it.
+                        - Portfolio/hedge: if multiple tickers and user hints combination, allow simple equal-weight order sizing via `from_signals` per leg.
             
-            Example Snippet:
-            price = data_map['600519.SH']['Close']
-            fast_ma = vbt.MA.run(price, 10)
-            slow_ma = vbt.MA.run(price, 50)
-            entries = fast_ma.ma_crossed_above(slow_ma)
-            exits = fast_ma.ma_crossed_below(slow_ma)
-            portfolio = vbt.Portfolio.from_signals(price, entries, exits, freq='1D')
-            """),
-            ("user", "{input}{feedback}")
-        ])
+                        Requirements:
+                        1. Use `vectorbt` (imported as `vbt`) for the backtest.
+                        2. The code MUST define a variable named `portfolio` which is the result of `vbt.Portfolio.from_signals(...)` or similar.
+                        3. Do NOT fetch data. Use `data_map['TICKER']` to access data.
+                        4. If multiple tickers are present, handle them appropriately (or pick the first one for single-asset strategies when unspecified).
+                        5. ALWAYS pass `freq='1D'` to `vbt.Portfolio.from_signals` or `from_orders`.
+                        6. Return ONLY the Python code. No markdown formatting, no ```python blocks.
+                        7. Ensure the code is safe and does not use system calls.
+            
+                        Example snippets (pick one pattern, do not output all):
+                        - RSI mean reversion:
+                            price = data_map['T']["Close"]
+                            rsi = vbt.RSI.run(price, window=14)
+                            entries = rsi.rsi < 30
+                            exits = rsi.rsi > 70
+                            portfolio = vbt.Portfolio.from_signals(price, entries, exits, freq='1D')
+                        - Bollinger band fade:
+                            bb = vbt.BBANDS.run(price, window=20, alpha=2)
+                            entries = price < bb.lower
+                            exits = price > bb.upper
+                            portfolio = vbt.Portfolio.from_signals(price, entries, exits, freq='1D')
+                        """),
+                        ("user", "{input}{feedback}")
+                ])
     
     chain = prompt | llm
     
@@ -142,9 +166,9 @@ def quant_agent(state: AgentState):
         
         code = code.strip()
         
-        # --- Human-in-the-Loop Code Editing ---
+        # --- Human-in-the-Loop Code Editing (auto-confirm) ---
         st.markdown("#### 💻 Generated Code (Editable)")
-        st.info("💡 **Tip:** You can edit the code below before execution. Click 'Confirm & Execute' when ready.")
+        st.info("💡 代码已自动确认，将直接进入执行。如需调整，可在下方编辑后自动生效。")
         
         # Use session state to track code editing
         code_key = f"edited_code_{hash(code)}"
@@ -159,55 +183,33 @@ def quant_agent(state: AgentState):
             label_visibility="collapsed"
         )
         
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            if st.button("🔄 Reset to Original", key=f"reset_{hash(code)}"):
-                st.session_state[code_key] = code
-                st.rerun()
-        
-        with col2:
-            confirm_button = st.button("✅ Confirm & Execute", key=f"confirm_{hash(code)}", type="primary")
-        
-        if confirm_button:
-            final_code = edited_code.strip()
-            st.session_state[code_key] = final_code
-            st.success("Code confirmed! Proceeding to execution...")
-            
-            # Mask sensitive fields in input_vars before storing
-            safe_input = dict(input_vars)
-            for kk in list(safe_input.keys()):
-                lk = kk.lower()
-                if 'token' in lk or 'api_key' in lk or 'secret' in lk or 'password' in lk:
-                    safe_input[kk] = '***MASKED***'
+        # Optional: allow quick reset, but auto-confirm regardless
+        if st.button("🔄 Reset to Original", key=f"reset_{hash(code)}"):
+            st.session_state[code_key] = code
+            st.rerun()
 
-            return {
-                "strategy_code": final_code,
-                "user_edited_code": final_code if final_code != code else None,
-                "code_confirmed": True,
-                "optimization_mode": optimization_mode,
-                "messages": [AIMessage(content="Generated strategy code (user confirmed).")],
-                "sender": "quant_agent",
-                "llm_interaction": {
-                    "input": safe_input,
-                    "prompt": formatted_prompt,
-                    "response": response.content
-                }
+        # Auto-confirm branch
+        final_code = edited_code.strip()
+        st.session_state[code_key] = final_code
+        st.success("Code auto-confirmed. Proceeding to execution...")
+        
+        # Mask sensitive fields in input_vars before storing
+        safe_input = dict(input_vars)
+        for kk in list(safe_input.keys()):
+            lk = kk.lower()
+            if 'token' in lk or 'api_key' in lk or 'secret' in lk or 'password' in lk:
+                safe_input[kk] = '***MASKED***'
+
+        return {
+            "strategy_code": final_code,
+            "user_edited_code": final_code if final_code != code else None,
+            "code_confirmed": True,
+            "optimization_mode": optimization_mode,
+            "messages": [AIMessage(content="Generated strategy code (auto-confirmed).")],
+            "sender": "quant_agent",
+            "llm_interaction": {
+                "input": safe_input,
+                "prompt": formatted_prompt,
+                "response": response.content
             }
-        else:
-            # If not confirmed, we still need to return something to allow the graph to proceed
-            # We'll mark code_confirmed as False so planner knows to wait
-            st.warning("⏸️ Waiting for code confirmation... Click 'Confirm & Execute' to proceed.")
-            return {
-                "strategy_code": code,
-                "code_confirmed": False,
-                "optimization_mode": optimization_mode,
-                "messages": [AIMessage(content="Code generated. Waiting for user confirmation.")],
-                "sender": "quant_agent",
-                "next_step": "WAIT_FOR_CONFIRMATION",
-                # Mask sensitive fields in input_vars before storing
-                "llm_interaction": {
-                    "input": {k: ('***MASKED***' if any(x in k.lower() for x in ['token','api_key','secret','password']) else v) for k,v in input_vars.items()},
-                    "prompt": formatted_prompt,
-                    "response": response.content
-                }
-            }
+        }

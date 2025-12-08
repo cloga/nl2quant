@@ -1,0 +1,15 @@
+{
+  "id": "d0607577-7a07-43a2-8bf6-efccdef2c1bc",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T05:47:37.078015",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "行情获取失败，请检查股票/指数代码或公司名是否正确。"
+    }
+  ]
+}

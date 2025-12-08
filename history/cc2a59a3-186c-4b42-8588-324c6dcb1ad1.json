@@ -1,0 +1,23 @@
+{
+  "id": "cc2a59a3-186c-4b42-8588-324c6dcb1ad1",
+  "title": "/data 获取 000300.SH 的...",
+  "timestamp": "2025-12-06T05:02:03.298268",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 获取 000300.SH 的行情"
+    },
+    {
+      "role": "assistant",
+      "content": "行情数据已获取。如需指标/图表/回测，请告知具体需求。"
+    },
+    {
+      "role": "user",
+      "content": "解读一下上面的数据"
+    },
+    {
+      "role": "assistant",
+      "content": "行情数据已获取。如需指标/图表/回测，请告知具体需求。"
+    }
+  ]
+}

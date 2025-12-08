@@ -1,0 +1,23 @@
+{
+  "id": "1434261f-10fe-4277-a4ac-b6f6ba874a57",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T07:43:42.752096",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "请问您想查询哪个市场的股票？例如：/data 600519.SH 或 /data 000858.SZ"
+    },
+    {
+      "role": "user",
+      "content": "获取中国平安(601318.SH)的数据并展示收盘价"
+    },
+    {
+      "role": "assistant",
+      "content": "行情数据已获取。如需指标/图表/回测，请告知具体需求。"
+    }
+  ]
+}

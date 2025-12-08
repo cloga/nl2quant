@@ -1,0 +1,15 @@
+{
+  "id": "3971fe6b-a130-4b41-a125-6dbfe4003bab",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T07:52:00.635420",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "请问您想查询哪个市场的股票？例如：/data 600519.SH 或 /data 000858.SZ"
+    }
+  ]
+}

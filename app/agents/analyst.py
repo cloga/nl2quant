@@ -279,7 +279,7 @@ Output Requirements:
         system_prompt = """You are a Senior Financial Analyst.
 
 Scenario 1: Backtest Results Available
-- If 'Metrics' contain values (not empty, not "{}", not "None"), interpret the backtest results and provide a comprehensive professional assessment.
+- If 'Metrics' contain values (not empty, not "{{}}", not "None"), interpret the backtest results and provide a comprehensive professional assessment.
 - Focus on:
     * **风险调整收益**：Sharpe Ratio、Sortino Ratio、Calmar Ratio。
     * **回撤情况**：最大回撤的深度与持续时间。
@@ -291,7 +291,7 @@ Scenario 1: Backtest Results Available
     4. **风险评估**。
 
 Scenario 2: Only Market Data or Metrics Missing
-- 如果 'Metrics' 为空、为 "{}"、为 "None"，或总体缺失，则说明本次任务仅为行情/数据分析。
+- 如果 'Metrics' 为空、为 "{{}}"、为 "None"，或总体缺失，则说明本次任务仅为行情/数据分析。
 - 在这种情况下：
     * 禁止使用"策略"、"回测"等字眼；也不要编造不存在的执行结果。
     * 使用 **数据概览** 作为首个小节标题，聚焦以下要点：
@@ -416,7 +416,7 @@ Market Data Info: {data_info}
         "analysis_completed": True,
         "analysis_runs": analysis_runs + 1,
         "llm_interaction": {
-            "input": input_vars,
+            "input": {k: ('***MASKED***' if any(x in k.lower() for x in ['token','api_key','secret','password']) else v) for k, v in input_vars.items()},
             "prompt": formatted_prompt,
             "response": response.content
         }

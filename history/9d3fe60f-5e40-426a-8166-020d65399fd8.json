@@ -1,0 +1,15 @@
+{
+  "id": "9d3fe60f-5e40-426a-8166-020d65399fd8",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T08:02:05.700249",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "请说明您想对588000（科创50ETF）做什么？例如：\n1. 查看实时行情：/data 588000.SH\n2. 进行回测分析：/backtest 588000.SH\n3. 获取估值指标：/valuation 588000.SH"
+    }
+  ]
+}

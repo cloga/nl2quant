@@ -1,0 +1,15 @@
+{
+  "id": "5f7570f7-7ef6-47a8-b55e-f2152818d4e0",
+  "title": "/data 588000",
+  "timestamp": "2025-12-06T08:07:15.683084",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 588000"
+    },
+    {
+      "role": "assistant",
+      "content": "请说明具体需求，例如：  \n- 查询行情：/data 588000.SH  \n- 回测策略：/backtest 策略描述  \n- 估值分析：/valuation 588000.SH"
+    }
+  ]
+}

@@ -42,9 +42,22 @@ class AgentState(TypedDict):
     analysis_completed: Optional[bool]
     analysis_runs: Optional[int]
 
+    # Valuation Output
+    valuation: Optional[Dict[str, Any]]
+
+    # Data fetch status
+    data_failed: Optional[bool]
+
+    # Planner / intent flags
+    need_full_history: Optional[bool]
+    needs_benchmark: Optional[bool]
+
     # LLM Overrides
     llm_provider: Optional[str]
     llm_model: Optional[str]
+
+    # Manual override for entry agent
+    force_agent: Optional[str]
 
     # Flow Control
     next_step: Optional[str]

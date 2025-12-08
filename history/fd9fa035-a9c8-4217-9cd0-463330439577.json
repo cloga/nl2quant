@@ -1,0 +1,15 @@
+{
+  "id": "fd9fa035-a9c8-4217-9cd0-463330439577",
+  "title": "/data 查询科创50etf的历史数据",
+  "timestamp": "2025-12-06T05:45:20.590043",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/data 查询科创50etf的历史数据"
+    },
+    {
+      "role": "assistant",
+      "content": "行情获取失败，请检查股票/指数代码或公司名是否正确。"
+    }
+  ]
+}
