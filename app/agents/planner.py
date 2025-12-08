@@ -5,6 +5,7 @@ from langchain_openai import ChatOpenAI
 import streamlit as st
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
+from app.config import Config
 
 # Simple in-memory cache for planner decisions to speed up repeated states
 _planner_cache = {}
@@ -21,9 +22,21 @@ def planner_agent(state: AgentState):
     3) deepseek-reasoner plans only when the task is classified as complex.
     """
     print("--- PLANNER AGENT ---")
-    # Base configs for DeepSeek
-    planner_api_key = os.getenv("LLM_DEEPSEEK_API_KEY")
-    planner_base = "https://api.deepseek.com"
+    # LLM settings (provider can be set via env; default in Config)
+    provider = state.get("llm_provider") or Config.LLM_PROVIDER
+    settings = Config.get_llm_settings(provider)
+    planner_api_key = settings.get("api_key")
+    planner_base = settings.get("base_url")
+    planner_model = settings.get("model")
+
+    def make_llm(model_override=None, temperature: float = 0, max_tokens=None):
+        return ChatOpenAI(
+            model=model_override or planner_model,
+            api_key=planner_api_key,
+            base_url=planner_base,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
     # Manual override: allow upstream to force a specific agent
     force_agent = state.get("force_agent")
@@ -81,13 +94,7 @@ def planner_agent(state: AgentState):
 
         is_ambig = heuristic_ambig
         try:
-            clf_llm = ChatOpenAI(
-                model="deepseek-chat",
-                api_key=planner_api_key,
-                base_url=planner_base,
-                temperature=0,
-                max_tokens=2,
-            )
+            clf_llm = make_llm(max_tokens=2)
             resp = (clf_prompt | clf_llm).invoke({"text": stripped[:400]})
             result = (resp.content or "").strip().lower()
             is_ambig = heuristic_ambig or (result != "clear")
@@ -109,13 +116,7 @@ Clarification: <中文澄清提问，给出 2-3 个示例，覆盖行情/回测/
 """),
                 ("user", "{text}")
             ])
-            ambig_llm = ChatOpenAI(
-                model="deepseek-chat",
-                api_key=planner_api_key,
-                base_url=planner_base,
-                temperature=0,
-                max_tokens=80,
-            )
+            ambig_llm = make_llm(max_tokens=80)
             resp = (ambig_prompt | ambig_llm).invoke({"text": user_input[:400]})
             content = (resp.content or "").strip()
             if "Clarification:" in content:
@@ -295,13 +296,7 @@ Reply with the label only.
             ),
             ("user", "{text}")
         ])
-        clf_llm = ChatOpenAI(
-            model="deepseek-chat",
-            api_key=planner_api_key,
-            base_url=planner_base,
-            temperature=0,
-            max_tokens=6,
-        )
+        clf_llm = make_llm(max_tokens=6)
         try:
             resp = (intent_prompt | clf_llm).invoke({"text": user_text[:400]})
             label = resp.content.strip().lower()
@@ -329,13 +324,7 @@ Reply with the label only.
             ("system", "You are a fast task classifier. Reply with 'simple' or 'complex' only."),
             ("user", "Classify the task: {task}")
         ])
-        clf_llm = ChatOpenAI(
-            model="deepseek-chat",
-            api_key=planner_api_key,
-            base_url=planner_base,
-            temperature=0,
-            max_tokens=4,
-        )
+        clf_llm = make_llm(max_tokens=4)
         try:
             resp = (clf_prompt | clf_llm).invoke({"task": user_text[:400]})
             text = resp.content.strip().lower()
@@ -345,13 +334,9 @@ Reply with the label only.
 
     complex_flag = is_complex_task(user_input)
     allow_fastpath = not complex_flag  # simple tasks take deterministic shortcuts; complex tasks defer to planner LLM
-    planner_model = "deepseek-reasoner" if complex_flag else "deepseek-chat"
-    llm = ChatOpenAI(
-        model=planner_model,
-        api_key=planner_api_key,
-        base_url=planner_base,
-        temperature=0,
-    )
+    # Use a heavier model only if provider is deepseek and marked complex; otherwise use provider default.
+    planner_model_name = "deepseek-reasoner" if (settings.get("provider") == "deepseek" and complex_flag) else planner_model
+    llm = make_llm(model_override=planner_model_name, temperature=0)
     
     has_data = "Yes" if state.get("market_data") else "No"
     data_failed = bool(state.get("data_failed"))

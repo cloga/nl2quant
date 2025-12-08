@@ -1,4 +1,5 @@
 import tushare as ts
+import akshare as ak
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
@@ -62,12 +63,12 @@ def data_agent(state: AgentState):
         print("Extracting ticker from user message...")
         from langchain_core.prompts import ChatPromptTemplate
         
-        # Use DeepSeek Chat for extraction
-        ds_settings = Config.get_llm_settings(provider or "deepseek")
+        # Use configured provider for extraction (defaults from Config)
+        ds_settings = Config.get_llm_settings(provider)
         llm = ChatOpenAI(
-            model="deepseek-chat",
+            model=ds_settings.get("model"),
             api_key=ds_settings.get("api_key"),
-            base_url="https://api.deepseek.com",
+            base_url=ds_settings.get("base_url"),
             temperature=0,
         )
         current_date_str = default_end_date
@@ -212,24 +213,65 @@ def data_agent(state: AgentState):
                 start_date = default_start_date
                 end_date = today_str
 
-            # Initialize Tushare
-            if not Config.TUSHARE_TOKEN:
-                st.error("Tushare token missing.")
-                return {
-                    "messages": [AIMessage(content="Error: Tushare token is missing in configuration.")],
-                    "sender": "data_agent"
-                }
-            
             # Expand date range if planner/user asked for all/full history
             if need_full_history:
                 start_date = "19900101"  # earliest practical default
                 end_date = today_str
 
-            st.write("⏳ Fetching data from Tushare...")
-            ts.set_token(Config.TUSHARE_TOKEN)
-            pro = ts.pro_api()
-            
             data_map = {}
+
+            # -------------------------
+            # Helper: AkShare fetch
+            # -------------------------
+            def fetch_with_akshare(ticker: str, sd: str, ed: str):
+                """Fetch daily data via AkShare. Supports A-share stocks/ETFs and common indices."""
+                # Normalize dates to YYYYMMDD strings (AkShare expects plain digits)
+                start = sd.replace("-", "")
+                end = ed.replace("-", "")
+
+                def norm_stock(ts_code: str):
+                    if "." in ts_code:
+                        return ts_code.split(".")[0]
+                    return ts_code
+
+                def is_index(ts_code: str) -> bool:
+                    return (
+                        (ts_code.endswith('.SH') and ts_code.startswith('000')) or
+                        (ts_code.endswith('.SZ') and ts_code.startswith('399'))
+                    )
+
+                try:
+                    if is_index(ticker):
+                        symbol = ticker.lower().replace(".sh", "sh").replace(".sz", "sz")
+                        df_idx = ak.index_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
+                        if df_idx is None or df_idx.empty:
+                            return pd.DataFrame()
+                        df_idx = df_idx.rename(columns={"日期": "date", "收盘": "close"})
+                        df_idx["date"] = pd.to_datetime(df_idx["date"])
+                        df_idx = df_idx.sort_values("date").set_index("date")
+                        df_idx = df_idx[["close"]]
+                        df_idx.columns = ["Close"]
+                        return df_idx
+
+                    symbol = norm_stock(ticker)
+                    df = ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="qfq")
+                    if df is None or df.empty:
+                        return pd.DataFrame()
+                    rename_map = {
+                        "日期": "date",
+                        "开盘": "Open",
+                        "最高": "High",
+                        "最低": "Low",
+                        "收盘": "Close",
+                        "成交量": "Volume",
+                    }
+                    df = df.rename(columns=rename_map)
+                    df["date"] = pd.to_datetime(df["date"])
+                    df = df.sort_values("date").set_index("date")
+                    df = df[["Open", "High", "Low", "Close", "Volume"]]
+                    return df
+                except Exception:
+                    return pd.DataFrame()
 
             def fetch_with_chunks(api_fn, code: str, sd: str, ed: str):
                 """Fetch data in yearly chunks to cover long history and avoid API limits."""
@@ -250,46 +292,70 @@ def data_agent(state: AgentState):
                 return pd.concat(frames, ignore_index=True)
             
             try:
+                # Initialize provider(s)
+                use_provider = Config.DATA_PROVIDER if Config.DATA_PROVIDER in Config.SUPPORTED_DATA_PROVIDERS else "tushare"
+                pro = None
+                if use_provider == "tushare":
+                    if not Config.TUSHARE_TOKEN:
+                        st.error("Tushare token missing. 请在配置中设置 TUSHARE_TOKEN 或切换 DATA_PROVIDER=akshare。")
+                        return {
+                            "messages": [AIMessage(content="Error: Tushare token is missing in configuration. 请配置 TUSHARE_TOKEN 或使用 akshare 数据源。")],
+                            "sender": "data_agent"
+                        }
+                    st.write("⏳ Fetching data from Tushare...")
+                    ts.set_token(Config.TUSHARE_TOKEN)
+                    pro = ts.pro_api()
+                elif use_provider == "akshare":
+                    st.write("⏳ Fetching data via AkShare...")
+
                 for ticker in tickers:
-                    print(f"Fetching data for {ticker}...")
+                    print(f"Fetching data for {ticker} using {use_provider}...")
 
-                    # Detect index vs stock: common CSI/SH indices are 000xxx.SH; SZ indices often 399xxx.SZ
-                    is_index = (
-                        (ticker.endswith('.SH') and ticker.startswith('000')) or
-                        (ticker.endswith('.SZ') and ticker.startswith('399'))
-                    )
+                    df = pd.DataFrame()
 
-                    if is_index:
-                        st.write(f"⬇️ **Data Agent:** Calling Tushare `index_daily` API for `{ticker}` ({start_date} to {end_date})...")
-                        df = fetch_with_chunks(pro.index_daily, ticker, start_date, end_date) if need_full_history else pro.index_daily(ts_code=ticker, start_date=start_date, end_date=end_date)
-                    else:
-                        st.write(f"⬇️ **Data Agent:** Calling Tushare `daily` API for `{ticker}` ({start_date} to {end_date})...")
-                        df = fetch_with_chunks(pro.daily, ticker, start_date, end_date) if need_full_history else pro.daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+                    if use_provider == "akshare":
+                        df = fetch_with_akshare(ticker, start_date, end_date)
+                        if df.empty:
+                            st.warning(f"AkShare 未取到数据，跳过 {ticker}。")
+                            continue
+                        st.success(f"AkShare 获取成功: {ticker}")
 
-                        # Fallback for ETFs/funds (A-share tickers often start with 5/1)
-                        if df.empty and ticker[:1] in {"5", "1"}:
-                            st.write(f"🔄 **Data Agent:** `daily` returned empty, retrying `fund_daily` for `{ticker}`...")
-                            df = fetch_with_chunks(pro.fund_daily, ticker, start_date, end_date) if need_full_history else pro.fund_daily(ts_code=ticker, start_date=start_date, end_date=end_date)
-                    
+                    if use_provider == "tushare":
+                        # Detect index vs stock
+                        is_index = (
+                            (ticker.endswith('.SH') and ticker.startswith('000')) or
+                            (ticker.endswith('.SZ') and ticker.startswith('399'))
+                        )
+
+                        if is_index:
+                            st.write(f"⬇️ **Data Agent:** Calling Tushare `index_daily` API for `{ticker}` ({start_date} to {end_date})...")
+                            df = fetch_with_chunks(pro.index_daily, ticker, start_date, end_date) if need_full_history else pro.index_daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+                        else:
+                            st.write(f"⬇️ **Data Agent:** Calling Tushare `daily` API for `{ticker}` ({start_date} to {end_date})...")
+                            df = fetch_with_chunks(pro.daily, ticker, start_date, end_date) if need_full_history else pro.daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+
+                            # Fallback for ETFs/funds (A-share tickers often start with 5/1)
+                            if df.empty and ticker[:1] in {"5", "1"}:
+                                st.write(f"🔄 **Data Agent:** `daily` returned empty, retrying `fund_daily` for `{ticker}`...")
+                                df = fetch_with_chunks(pro.fund_daily, ticker, start_date, end_date) if need_full_history else pro.fund_daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+
                     if df.empty:
                         print(f"No data found for {ticker}")
                         st.warning(f"No data found for {ticker}")
                         continue
                         
-                    # Tushare returns data in descending order usually, sort by date ascending
-                    date_col = 'trade_date' if 'trade_date' in df.columns else ('nav_date' if 'nav_date' in df.columns else None)
-                    if date_col is None:
-                        st.warning(f"Unexpected date column for {ticker}, skipping.")
-                        continue
-                    df[date_col] = pd.to_datetime(df[date_col])
-                    df = df.sort_values(date_col)
-                    df = df.set_index(date_col)
-                    
-                    # Keep relevant columns for VectorBT (Open, High, Low, Close, Volume)
-                    # Tushare columns: open, high, low, close, vol (fund_daily also provides these)
-                    df = df[['open', 'high', 'low', 'close', 'vol']]
-                    df.columns = ['Open', 'High', 'Low', 'Close', 'Volume'] # Standardize for vbt
-                    
+                    # Standardize columns
+                    if use_provider == "tushare":
+                        date_col = 'trade_date' if 'trade_date' in df.columns else ('nav_date' if 'nav_date' in df.columns else None)
+                        if date_col is None:
+                            st.warning(f"Unexpected date column for {ticker}, skipping.")
+                            continue
+                        df[date_col] = pd.to_datetime(df[date_col])
+                        df = df.sort_values(date_col)
+                        df = df.set_index(date_col)
+                        df = df[['open', 'high', 'low', 'close', 'vol']]
+                        df.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+
                     data_map[ticker] = df
                     
                     # Show preview
@@ -310,13 +376,17 @@ def data_agent(state: AgentState):
                     if benchmark and benchmark != primary:
                         try:
                             st.write(f"⬇️ **Data Agent:** Fetching benchmark `{benchmark}` for comparison (planner signaled benchmark需求)...")
-                            bench_df = pro.index_daily(ts_code=benchmark, start_date=start_date, end_date=end_date) if benchmark.endswith(('.SH', '.SZ')) else pro.daily(ts_code=benchmark, start_date=start_date, end_date=end_date)
-                            if not bench_df.empty:
-                                bench_df['trade_date'] = pd.to_datetime(bench_df['trade_date'])
-                                bench_df = bench_df.sort_values('trade_date')
-                                bench_df = bench_df.set_index('trade_date')
-                                bench_df = bench_df[['close']]
-                                bench_df.columns = ['Close']
+                            if use_provider == "akshare":
+                                bench_df = fetch_with_akshare(benchmark, start_date, end_date)
+                            else:
+                                bench_df = pro.index_daily(ts_code=benchmark, start_date=start_date, end_date=end_date) if benchmark.endswith(('.SH', '.SZ')) else pro.daily(ts_code=benchmark, start_date=start_date, end_date=end_date)
+                                if not bench_df.empty:
+                                    bench_df['trade_date'] = pd.to_datetime(bench_df['trade_date'])
+                                    bench_df = bench_df.sort_values('trade_date')
+                                    bench_df = bench_df.set_index('trade_date')
+                                    bench_df = bench_df[['close']]
+                                    bench_df.columns = ['Close']
+                            if bench_df is not None and not bench_df.empty:
                                 benchmark_data = {benchmark: bench_df}
                                 st.success(f"Successfully fetched benchmark data: {benchmark}")
                         except Exception as e:

@@ -8,7 +8,7 @@ load_dotenv()
 token = os.getenv("LLM_GITHUB_API_KEY")
 # Use the standard endpoint for OpenAI SDK with GitHub Models
 endpoint = "https://models.inference.ai.azure.com"
-model_name = "openai/gpt-5"
+model_name = "gpt-5"
 
 print(f"Testing access to: {model_name}")
 print(f"Endpoint: {endpoint}")

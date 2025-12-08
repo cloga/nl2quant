@@ -12,3 +12,4 @@ matplotlib
 scipy
 tables
 anywidget
+akshare

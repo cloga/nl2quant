@@ -24,6 +24,11 @@ class Config:
 
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "deepseek").lower()
 
+    # Data provider (tushare | akshare)
+    SUPPORTED_DATA_PROVIDERS = ["tushare", "akshare"]
+    DATA_PROVIDER = os.getenv("DATA_PROVIDER", "tushare").lower()
+    AKSHARE_TOKEN = os.getenv("AKSHARE_TOKEN")  # optional; some akshare endpoints use it
+
     # Data Settings
     TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN")
 
@@ -57,6 +62,10 @@ class Config:
     def validate(cls):
         if not cls.TUSHARE_TOKEN:
             print("Warning: TUSHARE_TOKEN is not set. Data fetching may fail.")
+
+        if cls.DATA_PROVIDER not in cls.SUPPORTED_DATA_PROVIDERS:
+            print(f"Warning: Unsupported DATA_PROVIDER '{cls.DATA_PROVIDER}'. Falling back to tushare.")
+            cls.DATA_PROVIDER = "tushare"
 
         settings = cls.get_llm_settings()
         if not settings.get("api_key"):
