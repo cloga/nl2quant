@@ -289,7 +289,7 @@ if run_btn:
                     })
                 
                 comparison_df = pd.DataFrame(comparison_data)
-                st.dataframe(comparison_df, use_container_width=True)
+                st.dataframe(comparison_df, width='stretch')
 
                 # ================================================================
                 # 净值曲线对比
@@ -319,7 +319,7 @@ if run_btn:
                     height=450,
                     template="plotly_white",
                 )
-                st.plotly_chart(fig_equity, use_container_width=True)
+                st.plotly_chart(fig_equity, width='stretch')
 
                 # ================================================================
                 # 关键指标对比柱状图
@@ -343,7 +343,7 @@ if run_btn:
                         showlegend=False,
                         height=350,
                     )
-                    st.plotly_chart(fig_cagr, use_container_width=True)
+                    st.plotly_chart(fig_cagr, width='stretch')
                 
                 with col2:
                     # Sharpe对比
@@ -360,7 +360,7 @@ if run_btn:
                         showlegend=False,
                         height=350,
                     )
-                    st.plotly_chart(fig_sharpe, use_container_width=True)
+                    st.plotly_chart(fig_sharpe, width='stretch')
 
                 col1, col2 = st.columns(2)
                 
@@ -379,7 +379,7 @@ if run_btn:
                         showlegend=False,
                         height=350,
                     )
-                    st.plotly_chart(fig_dd, use_container_width=True)
+                    st.plotly_chart(fig_dd, width='stretch')
                 
                 with col2:
                     # 波动率对比
@@ -396,7 +396,7 @@ if run_btn:
                         showlegend=False,
                         height=350,
                     )
-                    st.plotly_chart(fig_vol, use_container_width=True)
+                    st.plotly_chart(fig_vol, width='stretch')
 
                 # ================================================================
                 # 详细统计表

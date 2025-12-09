@@ -21,6 +21,446 @@ if str(ROOT) not in sys.path:
 
 from app.dca_backtest_engine import DCABacktestEngine
 
+
+def render_backtest_results(result, context):
+    """Render full backtest outputs using cached context."""
+    if result is None or context is None:
+        return
+
+    code = context.get("code", "")
+    start_date_str = context.get("start_date_str", "")
+    end_date_str = context.get("end_date_str", "")
+    strategy_type = context.get("strategy_type", "plain")
+    rebalance_freq = context.get("rebalance_freq", "M")
+    freq_day = context.get("freq_day")
+    monthly_investment = context.get("monthly_investment", 0.0)
+    commission_rate = context.get("commission_rate", 0.0)
+    min_commission = context.get("min_commission", 0.0)
+    slippage = context.get("slippage", 0.0)
+    initial_capital = context.get("initial_capital", 0.0)
+    risk_free_rate = context.get("risk_free_rate", 0.0)
+    enable_take_profit = context.get("enable_take_profit", False)
+    trailing_params = context.get("trailing_params")
+    enable_benchmark = context.get("enable_benchmark", False)
+    benchmark_options = context.get("benchmark_options", []) or []
+    max_total_investment = context.get("max_total_investment", 0.0)
+    elapsed_time = context.get("elapsed_time")
+
+    strategy_display = {
+        "plain": "普通定投",
+        "smart_pe": "智能PE定投",
+        "smart_pb": "智能PB定投",
+    }
+    freq_display = {"D": "每日", "W": "每周", "M": "每月"}
+    freq_detail = ""
+    if rebalance_freq == "W" and freq_day:
+        freq_detail = f" ({freq_day})"
+    elif rebalance_freq == "M" and freq_day:
+        freq_detail = f" ({freq_day}号)"
+
+    tp_info = "未启用"
+    if enable_take_profit and trailing_params:
+        if trailing_params.get("mode") == "target":
+            target_return = trailing_params.get("target_return", 0.04)
+            tp_info = f"目标 {target_return*100:.1f}%"
+        elif trailing_params.get("mode") == "trailing":
+            act_return = trailing_params.get("activation_return", 0.3)
+            dd_threshold = trailing_params.get("drawdown_threshold", 0.08)
+            tp_info = f"激活 {act_return*100:.0f}% 回撤 {dd_threshold*100:.0f}%"
+
+    config_text = f"""
+**标的与频率：**
+• 标的代码: `{code}` | 复权: `{context.get('price_mode', '后复权')}`
+• 策略: `{strategy_display.get(strategy_type, strategy_type)}`
+• 频率: `{freq_display.get(rebalance_freq, rebalance_freq)}{freq_detail}` | 金额: `¥{monthly_investment:,.0f}`
+
+**资金与风控：**
+• 初始资金: `¥{initial_capital:,.0f}` | 闲置收益: `{risk_free_rate*100:.1f}%`
+• 投资上限: `¥{max_total_investment:,.0f}` | 止盈: `{tp_info}`
+
+**成本参数：**
+• 佣金: `{commission_rate*10000:.1f}‱` | 最低: `¥{min_commission:.0f}` | 滑点: `{slippage*100:.2f}%`
+"""
+
+    st.success("✅ 回测完成！")
+    st.markdown(config_text)
+
+    # Diagnostics and timing
+    diag = result.get("diagnostics", {})
+    if diag:
+        ps = diag.get("price_start")
+        pe = diag.get("price_end")
+        ps_str = ps.strftime("%Y-%m-%d") if ps is not None else "-"
+        pe_str = pe.strftime("%Y-%m-%d") if pe is not None else "-"
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("💾 加载价格行数", f"{diag.get('price_rows', 0):,}")
+        with col2:
+            st.metric("📅 价格覆盖范围", f"{ps_str} → {pe_str}")
+        with col3:
+            st.metric("⏱️ 执行耗时", f"{elapsed_time}s" if elapsed_time is not None else "-")
+
+        if diag.get('valuation_rows', 0) > 0:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("💹 加载估值行数", f"{diag.get('valuation_rows', 0):,}")
+            with col2:
+                st.metric("📊 投资执行日数", f"{diag.get('investment_dates', 0):,}")
+            with col3:
+                st.metric("💹 交易成功率", f"{len(result.get('transactions', [])):,} 笔")
+
+    # Execution summary
+    transactions_df = result.get("transactions")
+    if transactions_df is not None and not transactions_df.empty:
+        total_transactions = len(transactions_df)
+        buy_transactions = len(transactions_df[transactions_df["action"] == "BUY"])
+        sell_transactions = len(transactions_df[transactions_df["action"].str.contains("SELL", na=False)])
+
+        ps = diag.get("price_start")
+        pe = diag.get("price_end")
+        actual_start = ps.strftime("%Y%m%d") if ps is not None else start_date_str
+        actual_end = pe.strftime("%Y%m%d") if pe is not None else end_date_str
+
+        st.info(f"""
+        **交易执行摘要:**
+        - 总交易次数: {total_transactions} 次
+        - 买入次数: {buy_transactions} 次
+        - 卖出次数: {sell_transactions} 次
+        - 回测时长: {actual_start} - {actual_end}
+        """)
+    else:
+        st.warning("⚠️ 未产生任何交易记录")
+
+    # Benchmark comparison
+    benchmark_results = {}
+    if enable_benchmark and benchmark_options:
+        st.markdown("### 📊 基准对比")
+
+        equity_curve = result["equity_curve"]
+        total_invested = result["metrics"].get("total_invested", 0)
+        price_series = result.get("price_series")
+
+        if not isinstance(price_series, pd.Series):
+            engine_price = getattr(DCABacktestEngine(), "price_df", None)
+            if isinstance(engine_price, pd.DataFrame):
+                price_series = engine_price.iloc[:, 0]
+            elif isinstance(engine_price, pd.Series):
+                price_series = engine_price
+
+        if "lump_sum" in benchmark_options and total_invested > 0:
+            try:
+                if isinstance(price_series, pd.Series) and not price_series.empty:
+                    start_price = price_series.iloc[0]
+                    shares_lump = total_invested / start_price
+                    lump_sum_equity = price_series * shares_lump
+
+                    final_lump = lump_sum_equity.iloc[-1]
+                    lump_return = (final_lump - total_invested) / total_invested * 100
+
+                    benchmark_results["lump_sum"] = {
+                        "equity": lump_sum_equity,
+                        "final_value": final_lump,
+                        "return_pct": lump_return,
+                    }
+                else:
+                    st.caption("⚠️ 一次性买入基准缺少价格数据，已跳过")
+            except Exception as e:
+                st.caption(f"⚠️ 一次性买入基准计算失败: {str(e)}")
+
+        if "plain_dca" in benchmark_options and strategy_type != "plain":
+            try:
+                engine = DCABacktestEngine()
+                plain_result = engine.run_smart_dca_backtest(
+                    code=code,
+                    monthly_investment=monthly_investment,
+                    start_date=start_date_str,
+                    end_date=end_date_str,
+                    strategy_type="plain",
+                    smart_params=None,
+                    rebalance_freq=rebalance_freq,
+                    freq_day=freq_day,
+                    commission_rate=commission_rate,
+                    min_commission=min_commission,
+                    slippage=slippage,
+                    initial_capital=initial_capital,
+                    risk_free_rate=risk_free_rate,
+                    trailing_params=trailing_params if enable_take_profit else None,
+                    max_total_investment=max_total_investment,
+                )
+                benchmark_results["plain_dca"] = {
+                    "equity": plain_result["equity_curve"],
+                    "final_value": plain_result["metrics"].get("final_value", 0),
+                    "return_pct": plain_result["metrics"].get("total_return_pct", 0),
+                }
+            except Exception as e:
+                st.caption(f"⚠️ 普通定投基准计算失败: {str(e)}")
+
+        if benchmark_results:
+            current_return = result["metrics"].get("total_return_pct", 0)
+            current_final = result["metrics"].get("final_value", 0)
+
+            comparison_data = [{
+                "策略": strategy_display.get(strategy_type, strategy_type),
+                "期末资产": f"¥{current_final:,.0f}",
+                "总收益率": f"{current_return:.2f}%",
+                "相对收益": "-",
+            }]
+
+            if "lump_sum" in benchmark_results:
+                br = benchmark_results["lump_sum"]
+                alpha = current_return - br["return_pct"]
+                comparison_data.append({
+                    "策略": "一次性买入",
+                    "期末资产": f"¥{br['final_value']:,.0f}",
+                    "总收益率": f"{br['return_pct']:.2f}%",
+                    "相对收益": f"{alpha:+.2f}%",
+                })
+
+            if "plain_dca" in benchmark_results:
+                br = benchmark_results["plain_dca"]
+                alpha = current_return - br["return_pct"]
+                comparison_data.append({
+                    "策略": "普通定投",
+                    "期末资产": f"¥{br['final_value']:,.0f}",
+                    "总收益率": f"{br['return_pct']:.2f}%",
+                    "相对收益": f"{alpha:+.2f}%",
+                })
+
+            st.dataframe(pd.DataFrame(comparison_data), width='stretch', hide_index=True)
+            st.session_state.benchmark_results = benchmark_results
+
+    metrics = result["metrics"]
+    st.markdown("### 📊 核心指标")
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.metric("总投资额", f"¥{metrics.get('total_invested', 0):,.0f}")
+    with col2:
+        st.metric("期末资产", f"¥{metrics.get('final_value', 0):,.0f}")
+    with col3:
+        st.metric("总收益率", f"{metrics.get('total_return_pct', 0):.2f}%")
+    with col4:
+        st.metric("年化收益 (CAGR)", f"{metrics.get('cagr_pct', 0):.2f}%")
+    with col5:
+        st.metric("Sharpe比率", f"{metrics.get('sharpe_ratio', 0):.2f}")
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Sortino比率", f"{metrics.get('sortino_ratio', 0):.2f}")
+    with col2:
+        st.metric("Calmar比率", f"{metrics.get('calmar_ratio', 0):.2f}")
+    with col3:
+        st.metric("最大回撤", f"{metrics.get('max_drawdown_pct', 0):.2f}%")
+    with col4:
+        st.metric("年化波动率", f"{metrics.get('volatility_pct', 0):.2f}%")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("月度胜率", f"{metrics.get('win_rate_pct', 0):.2f}%")
+    with col2:
+        st.metric("回测天数", f"{metrics.get('total_days', 0)} 天")
+
+    st.markdown("### 📈 净值曲线与投资节点")
+    equity_curve = result["equity_curve"]
+    transactions = result["transactions"]
+
+    fig_equity = go.Figure()
+    fig_equity.add_trace(
+        go.Scatter(
+            x=equity_curve.index,
+            y=equity_curve.values,
+            mode="lines",
+            name="组合净值",
+            line=dict(color="royalblue", width=2),
+            fill="tozeroy",
+        )
+    )
+
+    if not transactions.empty:
+        buy_txs = transactions[transactions["action"] == "BUY"]
+        if not buy_txs.empty:
+            buy_dates = pd.to_datetime(buy_txs["date"])
+            buy_values = [
+                equity_curve.loc[equity_curve.index >= d].iloc[0]
+                if len(equity_curve.loc[equity_curve.index >= d]) > 0
+                else equity_curve.iloc[-1]
+                for d in buy_dates
+            ]
+
+            fig_equity.add_trace(
+                go.Scatter(
+                    x=buy_dates,
+                    y=buy_values,
+                    mode="markers",
+                    name="买入点",
+                    marker=dict(color="green", size=8, symbol="triangle-up"),
+                    hovertemplate="<b>买入</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
+                )
+            )
+
+        sell_txs = transactions[transactions["action"].str.contains("SELL", na=False)]
+        if not sell_txs.empty:
+            sell_dates = pd.to_datetime(sell_txs["date"])
+            sell_values = [
+                equity_curve.loc[equity_curve.index >= d].iloc[0]
+                if len(equity_curve.loc[equity_curve.index >= d]) > 0
+                else equity_curve.iloc[-1]
+                for d in sell_dates
+            ]
+
+            fig_equity.add_trace(
+                go.Scatter(
+                    x=sell_dates,
+                    y=sell_values,
+                    mode="markers",
+                    name="止盈卖出",
+                    marker=dict(color="red", size=10, symbol="triangle-down"),
+                    hovertemplate="<b>卖出</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
+                )
+            )
+
+    if benchmark_results:
+        if "lump_sum" in benchmark_results:
+            lump_equity = benchmark_results["lump_sum"]["equity"]
+            fig_equity.add_trace(
+                go.Scatter(
+                    x=lump_equity.index,
+                    y=lump_equity.values,
+                    mode="lines",
+                    name="一次性买入",
+                    line=dict(color="orange", width=1.5, dash="dash"),
+                )
+            )
+
+        if "plain_dca" in benchmark_results:
+            plain_equity = benchmark_results["plain_dca"]["equity"]
+            fig_equity.add_trace(
+                go.Scatter(
+                    x=plain_equity.index,
+                    y=plain_equity.values,
+                    mode="lines",
+                    name="普通定投",
+                    line=dict(color="green", width=1.5, dash="dot"),
+                )
+            )
+
+    fig_equity.update_layout(
+        title="定投组合净值曲线（含交易标记）",
+        xaxis_title="日期",
+        yaxis_title="资产价值 (元)",
+        hovermode="x unified",
+        height=450,
+        template="plotly_white",
+    )
+    st.plotly_chart(fig_equity, width='stretch')
+
+    st.markdown("### 💼 期末持仓")
+    final_position = result["final_position"]
+    if final_position:
+        position_df = pd.DataFrame([{
+            "代码": final_position["code"],
+            "持仓数": f"{final_position['shares']:,.2f}",
+            "当前价格": f"¥{final_position['price']:.2f}",
+            "持仓市值": f"¥{final_position.get('holdings_value', 0):,.2f}",
+            "现金余额": f"¥{final_position.get('cash', 0):,.2f}",
+            "总资产": f"¥{final_position.get('total_value', 0):,.2f}",
+            "总收益": f"¥{final_position['gain']:,.2f}",
+            "收益率": f"{final_position['gain_pct']:.2f}%",
+        }])
+        st.dataframe(position_df, width='stretch')
+    else:
+        position_df = pd.DataFrame()
+
+    if result.get("strategy_metrics") is not None and not result["strategy_metrics"].empty:
+        st.markdown("### 📊 策略指标追踪")
+        strategy_df = result["strategy_metrics"]
+
+        metric_col = "pe" if strategy_type == "smart_pe" else "pb"
+        if metric_col in strategy_df.columns:
+            fig_metric = go.Figure()
+            fig_metric.add_trace(
+                go.Scatter(
+                    x=strategy_df["date"],
+                    y=strategy_df[metric_col],
+                    mode="lines+markers",
+                    name=metric_col.upper(),
+                    line=dict(color="orange"),
+                )
+            )
+            fig_metric.update_layout(
+                title=f"投资时点的{metric_col.upper()}值变化",
+                xaxis_title="日期",
+                yaxis_title=metric_col.upper(),
+                hovermode="x unified",
+                height=350,
+                template="plotly_white",
+            )
+            st.plotly_chart(fig_metric, width='stretch')
+
+    st.markdown("### 📝 交易记录")
+    if not transactions.empty:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            total_commission = transactions["commission"].sum()
+            st.metric("累计佣金", f"¥{total_commission:,.2f}")
+        with col2:
+            avg_price = transactions[transactions["action"] == "BUY"]["price"].mean()
+            st.metric("平均买入价", f"¥{avg_price:.2f}")
+        with col3:
+            last_price = transactions.iloc[-1]["price"]
+            st.metric("最后交易价", f"¥{last_price:.2f}")
+
+        tx_display = transactions.copy()
+        tx_display["date"] = tx_display["date"].dt.strftime("%Y-%m-%d")
+        tx_display["cumulative_invested"] = tx_display[tx_display["action"] == "BUY"]["investment"].cumsum()
+
+        display_columns = ["date", "action", "price", "execution_price", "shares", "investment", "commission"]
+        if "cumulative_invested" in tx_display.columns:
+            display_columns.append("cumulative_invested")
+
+        show_all = st.checkbox("显示全部交易记录", value=False, key=f"show_all_transactions_{context.get('render_id', 'current')}")
+        if show_all:
+            st.dataframe(tx_display[display_columns], width='stretch')
+        else:
+            st.dataframe(tx_display[display_columns].tail(30), width='stretch')
+            st.caption(f"显示最近30条交易，共{len(transactions)}条")
+    else:
+        st.warning("暂无交易记录")
+
+    st.markdown("### 📥 导出结果")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        equity_csv = equity_curve.reset_index()
+        equity_csv.columns = ["date", "value"]
+        st.download_button(
+            label="下载净值曲线",
+            data=equity_csv.to_csv(index=False),
+            file_name=f"dca_equity_{code}_{start_date_str}_{end_date_str}.csv",
+            mime="text/csv",
+            key=f"download_equity_{context.get('render_id', 'current')}",
+        )
+
+    with col2:
+        if not position_df.empty:
+            st.download_button(
+                label="下载持仓信息",
+                data=position_df.to_csv(index=False),
+                file_name=f"dca_positions_{code}_{end_date_str}.csv",
+                mime="text/csv",
+                key=f"download_positions_{context.get('render_id', 'current')}",
+            )
+
+    with col3:
+        if not transactions.empty:
+            st.download_button(
+                label="下载交易记录",
+                data=transactions.to_csv(index=False),
+                file_name=f"dca_transactions_{code}_{start_date_str}_{end_date_str}.csv",
+                mime="text/csv",
+                key=f"download_transactions_{context.get('render_id', 'current')}",
+            )
+
 # ============================================================================
 # Cache & Initialization
 # ============================================================================
@@ -77,6 +517,14 @@ st.markdown(
 )
 
 # ============================================================================
+# Session State Initialization
+# ============================================================================
+if "backtest_result" not in st.session_state:
+    st.session_state.backtest_result = None
+if "show_all_transactions" not in st.session_state:
+    st.session_state.show_all_transactions = False
+
+# ============================================================================
 # Page Title
 # ============================================================================
 st.title("📊 DCA 定投回测平台")
@@ -95,6 +543,7 @@ st.sidebar.markdown("### 标的选择")
 asset_type = st.sidebar.selectbox(
     "选择标的类型",
     ["基金", "指数", "股票"],
+    index=1,  # Default to "指数"
     help="选择要回测的资产类型"
 )
 
@@ -296,6 +745,15 @@ with st.sidebar.expander("🛡️ 止盈与风控", expanded=False):
         )
         
         if take_profit_mode == "target":
+            # Add option for return calculation method
+            return_calc_method = st.radio(
+                "收益计算方式",
+                ["holdings_only", "total_portfolio"],
+                format_func=lambda x: {"holdings_only": "持仓收益百分比", "total_portfolio": "总仓位收益百分比"}[x],
+                index=0,  # Default to holdings_only
+                help="持仓收益：仅计算持仓部分的收益率；总仓位收益：包含现金在内的总资产收益率",
+            )
+            
             target_return = st.number_input(
                 "目标收益率 (%)",
                 min_value=0.0,
@@ -304,7 +762,11 @@ with st.sidebar.expander("🛡️ 止盈与风控", expanded=False):
                 step=0.5,
                 help="达到此收益率后清仓",
             ) / 100
-            trailing_params = {"mode": "target", "target_return": target_return}
+            trailing_params = {
+                "mode": "target", 
+                "target_return": target_return,
+                "return_calc_method": return_calc_method,
+            }
         
         elif take_profit_mode == "trailing":
             activation_return = st.slider(
@@ -386,8 +848,12 @@ benchmark_options = []
 if enable_benchmark:
     if st.sidebar.checkbox("对比一次性买入", value=True, help="第一天全部买入"):
         benchmark_options.append("lump_sum")
-    if st.sidebar.checkbox("对比普通定投", value=True, help="固定金额定投"):
-        benchmark_options.append("plain_dca")
+    # 只有当策略不是普通定投时，才显示"对比普通定投"选项
+    if strategy_type != "plain":
+        if st.sidebar.checkbox("对比普通定投", value=True, help="固定金额定投"):
+            benchmark_options.append("plain_dca")
+    else:
+        st.sidebar.caption("💡 当前已选择普通定投策略")
 
 # ============================================================================
 # Main Content Area
@@ -462,45 +928,54 @@ if run_backtest_btn:
 
         # Create progress containers
         progress_container = st.empty()
-        status_container = st.empty()
+        log_container = st.empty()
         timer_container = st.empty()
         
         import time
+        import io
+        import sys
         
         start_time = time.time()
+        
+        # Create a custom log buffer to capture backend logs
+        log_buffer = io.StringIO()
         
         try:
             # Initialize engine
             with progress_container:
                 st.info("🔧 初始化回测引擎...")
-            st.write("")  # 添加间距
+            
+            # Display log container header
+            with log_container:
+                st.markdown("### 📋 执行日志")
+                log_display = st.empty()
+                log_text = "🟢 开始初始化...\n"
+                log_display.code(log_text, language="text")
+            
             engine = DCABacktestEngine()
-
-            # Fetch data
-            with progress_container:
-                st.info(f"📡 正在获取 {codes[0]} 的价格数据...")
-                st.caption(f"   时间范围: {start_date_str} - {end_date_str}")
-            st.write("")  # 添加间距
+            log_text += "✓ 回测引擎初始化完成\n"
+            
+            # Update logs during data fetch
+            log_text += f"🟢 正在获取 {codes[0]} 的价格数据...\n"
+            log_text += f"   时间范围: {start_date_str} - {end_date_str}\n"
+            with log_container:
+                log_display.code(log_text, language="text")
 
             # For single asset or smart strategies
             code = codes[0] if len(codes) > 0 else "510300"
             strategy_label = {"plain": "普通定投", "smart_pe": "智能PE", "smart_pb": "智能PB"}.get(strategy_type, strategy_type)
             freq_label = {"D": "每日", "W": "每周", "M": "每月"}.get(rebalance_freq, rebalance_freq)
             
-            # Show configuration summary
-            with status_container:
-                st.markdown(f"""
-                **回测配置:**
-                - 标的代码: `{code}`
-                - 策略类型: `{strategy_label}`
-                - 投资频率: `{freq_label}`
-                - 每次金额: `¥{monthly_investment:,.0f}`
-                - 初始资金: `¥{initial_capital:,.0f}`
-                - 佣金费率: `{commission_rate*10000:.1f}‱`
-                """)
-            
             with progress_container:
                 st.info("⚙️ 正在执行回测模拟...")
+            
+            log_text += f"✓ 数据获取完成\n"
+            log_text += f"🟢 开始执行回测:\n"
+            log_text += f"   - 标的: {code} ({strategy_label})\n"
+            log_text += f"   - 频率: {freq_label}\n"
+            log_text += f"   - 金额: ¥{monthly_investment:,.0f}\n"
+            with log_container:
+                log_display.code(log_text, language="text")
             
             result = engine.run_smart_dca_backtest(
                 code=code,
@@ -520,15 +995,22 @@ if run_backtest_btn:
                 max_total_investment=max_total_investment,
             )
             
+            # Store result in session state to preserve state when checkbox changes
+            st.session_state.backtest_result = result
+            
             elapsed_time = int(time.time() - start_time)
+            
+            log_text += f"✓ 回测模拟完成\n"
+            log_text += f"📊 正在生成结果...\n"
+            with log_container:
+                log_display.code(log_text, language="text")
             
             # Display elapsed time with timer
             with timer_container:
-                st.caption(f"⏱️ 已耗时: {elapsed_time}s")
+                st.metric("⏱️ 耗时", f"{elapsed_time}s")
             
             # Clear progress indicators
             progress_container.empty()
-            status_container.empty()
 
             # ================================================================
             # Display Results
@@ -567,15 +1049,131 @@ if run_backtest_btn:
                 buy_transactions = len(transactions_df[transactions_df["action"] == "BUY"])
                 sell_transactions = len(transactions_df[transactions_df["action"].str.contains("SELL", na=False)])
                 
+                # Use actual data range from diagnostics for display
+                diag = result.get("diagnostics", {})
+                ps = diag.get("price_start")
+                pe = diag.get("price_end")
+                actual_start = ps.strftime("%Y%m%d") if ps is not None else start_date_str
+                actual_end = pe.strftime("%Y%m%d") if pe is not None else end_date_str
+                
                 st.info(f"""
                 **交易执行摘要:**
                 - 总交易次数: {total_transactions} 次
                 - 买入次数: {buy_transactions} 次
                 - 卖出次数: {sell_transactions} 次
-                - 回测时长: {start_date_str} - {end_date_str}
+                - 回测时长: {actual_start} - {actual_end}
                 """)
             else:
                 st.warning("⚠️ 未产生任何交易记录")
+
+            # ================================================================
+            # Benchmark Comparison
+            # ================================================================
+            benchmark_results = {}
+            if enable_benchmark and benchmark_options:
+                st.markdown("### 📊 基准对比")
+                
+                equity_curve = result["equity_curve"]
+                total_invested = result["metrics"].get("total_invested", 0)
+                price_series = result.get("price_series")
+
+                # Fallback to engine cached price data if needed
+                if not isinstance(price_series, pd.Series):
+                    engine_price = getattr(engine, "price_df", None)
+                    if isinstance(engine_price, pd.DataFrame):
+                        price_series = engine_price.iloc[:, 0]
+                    elif isinstance(engine_price, pd.Series):
+                        price_series = engine_price
+                
+                # Calculate lump sum benchmark (buy all at start)
+                if "lump_sum" in benchmark_options and total_invested > 0:
+                    try:
+                        # Get price data for lump sum calculation
+                        if isinstance(price_series, pd.Series) and not price_series.empty:
+                            start_price = price_series.iloc[0]
+                            # Calculate shares if invested all at start
+                            shares_lump = total_invested / start_price
+                            # Calculate equity curve for lump sum
+                            lump_sum_equity = price_series * shares_lump
+                            
+                            # Calculate lump sum metrics
+                            final_lump = lump_sum_equity.iloc[-1]
+                            lump_return = (final_lump - total_invested) / total_invested * 100
+                            
+                            benchmark_results["lump_sum"] = {
+                                "equity": lump_sum_equity,
+                                "final_value": final_lump,
+                                "return_pct": lump_return,
+                            }
+                        else:
+                            st.caption("⚠️ 一次性买入基准缺少价格数据，已跳过")
+                    except Exception as e:
+                        st.caption(f"⚠️ 一次性买入基准计算失败: {str(e)}")
+                
+                # Calculate plain DCA benchmark (if using smart strategy)
+                if "plain_dca" in benchmark_options and strategy_type != "plain":
+                    try:
+                        plain_result = engine.run_smart_dca_backtest(
+                            code=code,
+                            monthly_investment=monthly_investment,
+                            start_date=start_date_str,
+                            end_date=end_date_str,
+                            strategy_type="plain",
+                            smart_params=None,
+                            rebalance_freq=rebalance_freq,
+                            freq_day=freq_day,
+                            commission_rate=commission_rate,
+                            min_commission=min_commission,
+                            slippage=slippage,
+                            initial_capital=initial_capital,
+                            risk_free_rate=risk_free_rate,
+                            trailing_params=trailing_params if enable_take_profit else None,
+                            max_total_investment=max_total_investment,
+                        )
+                        benchmark_results["plain_dca"] = {
+                            "equity": plain_result["equity_curve"],
+                            "final_value": plain_result["metrics"].get("final_value", 0),
+                            "return_pct": plain_result["metrics"].get("total_return_pct", 0),
+                        }
+                    except Exception as e:
+                        st.caption(f"⚠️ 普通定投基准计算失败: {str(e)}")
+                
+                # Display benchmark comparison table
+                if benchmark_results:
+                    current_return = result["metrics"].get("total_return_pct", 0)
+                    current_final = result["metrics"].get("final_value", 0)
+                    
+                    comparison_data = [{
+                        "策略": strategy_display.get(strategy_type, strategy_type),
+                        "期末资产": f"¥{current_final:,.0f}",
+                        "总收益率": f"{current_return:.2f}%",
+                        "相对收益": "-",
+                    }]
+                    
+                    if "lump_sum" in benchmark_results:
+                        br = benchmark_results["lump_sum"]
+                        alpha = current_return - br["return_pct"]
+                        comparison_data.append({
+                            "策略": "一次性买入",
+                            "期末资产": f"¥{br['final_value']:,.0f}",
+                            "总收益率": f"{br['return_pct']:.2f}%",
+                            "相对收益": f"{alpha:+.2f}%",
+                        })
+                    
+                    if "plain_dca" in benchmark_results:
+                        br = benchmark_results["plain_dca"]
+                        alpha = current_return - br["return_pct"]
+                        comparison_data.append({
+                            "策略": "普通定投",
+                            "期末资产": f"¥{br['final_value']:,.0f}",
+                            "总收益率": f"{br['return_pct']:.2f}%",
+                            "相对收益": f"{alpha:+.2f}%",
+                        })
+                    
+                    st.dataframe(pd.DataFrame(comparison_data), width='stretch', hide_index=True)
+                    
+                    # Store for chart
+                    st.session_state.benchmark_results = benchmark_results
 
             # Key metrics
             metrics = result["metrics"]
@@ -697,6 +1295,32 @@ if run_backtest_btn:
                         )
                     )
             
+            # Add benchmark curves if available
+            if benchmark_results:
+                if "lump_sum" in benchmark_results:
+                    lump_equity = benchmark_results["lump_sum"]["equity"]
+                    fig_equity.add_trace(
+                        go.Scatter(
+                            x=lump_equity.index,
+                            y=lump_equity.values,
+                            mode="lines",
+                            name="一次性买入",
+                            line=dict(color="orange", width=1.5, dash="dash"),
+                        )
+                    )
+                
+                if "plain_dca" in benchmark_results:
+                    plain_equity = benchmark_results["plain_dca"]["equity"]
+                    fig_equity.add_trace(
+                        go.Scatter(
+                            x=plain_equity.index,
+                            y=plain_equity.values,
+                            mode="lines",
+                            name="普通定投",
+                            line=dict(color="green", width=1.5, dash="dot"),
+                        )
+                    )
+            
             fig_equity.update_layout(
                 title="定投组合净值曲线（含交易标记）",
                 xaxis_title="日期",
@@ -705,7 +1329,7 @@ if run_backtest_btn:
                 height=450,
                 template="plotly_white",
             )
-            st.plotly_chart(fig_equity, use_container_width=True)
+            st.plotly_chart(fig_equity, width='stretch')
 
             # Positions breakdown
             st.markdown("### 💼 期末持仓")
@@ -721,7 +1345,7 @@ if run_backtest_btn:
                     "总收益": f"¥{final_position['gain']:,.2f}",
                     "收益率": f"{final_position['gain_pct']:.2f}%",
                 }])
-                st.dataframe(position_df, use_container_width=True)
+                st.dataframe(position_df, width='stretch')
 
             # Strategy metrics for smart strategies
             if result.get("strategy_metrics") is not None and not result["strategy_metrics"].empty:
@@ -748,7 +1372,7 @@ if run_backtest_btn:
                         height=350,
                         template="plotly_white",
                     )
-                    st.plotly_chart(fig_metric, use_container_width=True)
+                    st.plotly_chart(fig_metric, width='stretch')
 
             # Transaction history
             st.markdown("### 📝 交易记录")
@@ -778,11 +1402,11 @@ if run_backtest_btn:
                     display_columns.append("cumulative_invested")
                 
                 # Show last 30 transactions by default
-                show_all = st.checkbox("显示全部交易记录", value=False)
+                show_all = st.checkbox("显示全部交易记录", value=False, key="show_all_transactions")
                 if show_all:
-                    st.dataframe(tx_display[display_columns], use_container_width=True)
+                    st.dataframe(tx_display[display_columns], width='stretch')
                 else:
-                    st.dataframe(tx_display[display_columns].tail(30), use_container_width=True)
+                    st.dataframe(tx_display[display_columns].tail(30), width='stretch')
                     st.caption(f"显示最近30条交易，共{len(transactions)}条")
 
             # Download results
@@ -797,6 +1421,7 @@ if run_backtest_btn:
                     data=equity_csv.to_csv(index=False),
                     file_name=f"dca_equity_{code}_{start_date_str}_{end_date_str}.csv",
                     mime="text/csv",
+                    key="download_equity_main",
                 )
 
             with col2:
@@ -805,6 +1430,7 @@ if run_backtest_btn:
                     data=position_df.to_csv(index=False),
                     file_name=f"dca_positions_{code}_{end_date_str}.csv",
                     mime="text/csv",
+                    key="download_positions_main",
                 )
 
             with col3:
@@ -814,11 +1440,103 @@ if run_backtest_btn:
                         data=transactions.to_csv(index=False),
                         file_name=f"dca_transactions_{code}_{start_date_str}_{end_date_str}.csv",
                         mime="text/csv",
+                        key="download_transactions_main",
                     )
 
         except Exception as e:
             st.error(f"❌ 回测失败：{str(e)}")
             st.info("💡 可能原因：\n- 数据源连接失败\n- ETF代码不存在\n- 时间范围内无数据\n- 估值数据不可用(智能定投需要)")
+
+# ================================================================
+# Display cached results if available
+# ================================================================
+if st.session_state.backtest_result is not None and not run_backtest_btn:
+    st.divider()
+    st.markdown("### 📊 缓存的回测结果")
+    result = st.session_state.backtest_result
+    
+    # Transaction history for cached results
+    st.markdown("### 📝 交易记录")
+    transactions = result["transactions"]
+    if not transactions.empty:
+        # Show summary stats
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            total_commission = transactions["commission"].sum()
+            st.metric("累计佣金", f"¥{total_commission:,.2f}")
+        with col2:
+            avg_price = transactions[transactions["action"] == "BUY"]["price"].mean()
+            st.metric("平均买入价", f"¥{avg_price:.2f}")
+        with col3:
+            last_price = transactions.iloc[-1]["price"]
+            st.metric("最后交易价", f"¥{last_price:.2f}")
+        
+        # Show transaction table with more details
+        tx_display = transactions.copy()
+        tx_display["date"] = tx_display["date"].dt.strftime("%Y-%m-%d")
+        
+        # Add cumulative investment column
+        tx_display["cumulative_invested"] = tx_display[tx_display["action"] == "BUY"]["investment"].cumsum()
+        
+        display_columns = ["date", "action", "price", "execution_price", "shares", "investment", "commission"]
+        if "cumulative_invested" in tx_display.columns:
+            display_columns.append("cumulative_invested")
+        
+        # Show last 30 transactions by default
+        show_all = st.checkbox("显示全部交易记录", value=False, key="show_all_transactions")
+        if show_all:
+            st.dataframe(tx_display[display_columns], width='stretch')
+        else:
+            st.dataframe(tx_display[display_columns].tail(30), width='stretch')
+            st.caption(f"显示最近30条交易，共{len(transactions)}条")
+    
+    # Download results for cached data
+    st.markdown("### 📥 导出结果")
+    col1, col2, col3 = st.columns(3)
+    
+    equity_curve = result["equity_curve"]
+    final_position = result.get("final_position", {})
+    
+    with col1:
+        equity_csv = equity_curve.reset_index()
+        equity_csv.columns = ["date", "value"]
+        st.download_button(
+            label="下载净值曲线",
+            data=equity_csv.to_csv(index=False),
+            file_name="dca_equity_cached.csv",
+            mime="text/csv",
+            key="download_equity_cached",
+        )
+    
+    with col2:
+        if final_position:
+            position_df = pd.DataFrame([{
+                "代码": final_position.get("code", ""),
+                "持仓数": final_position.get('shares', 0),
+                "当前价格": final_position.get('price', 0),
+                "持仓市值": final_position.get('holdings_value', 0),
+                "现金余额": final_position.get('cash', 0),
+                "总资产": final_position.get('total_value', 0),
+                "总收益": final_position.get('gain', 0),
+                "收益率": final_position.get('gain_pct', 0),
+            }])
+            st.download_button(
+                label="下载持仓信息",
+                data=position_df.to_csv(index=False),
+                file_name="dca_positions_cached.csv",
+                mime="text/csv",
+                key="download_positions_cached",
+            )
+    
+    with col3:
+        if not transactions.empty:
+            st.download_button(
+                label="下载交易记录",
+                data=transactions.to_csv(index=False),
+                file_name="dca_transactions_cached.csv",
+                mime="text/csv",
+                key="download_transactions_cached",
+            )
 
 # ============================================================================
 # Footer & Help

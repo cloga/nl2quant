@@ -24,6 +24,7 @@ class DCABacktestEngine:
         self.pro = ts.pro_api(self.token)
         self.max_retries = 3
         self.retry_delay = 2
+        self.price_df = None  # Compatibility hook for callers that expect cached price data
 
     @staticmethod
     def candidate_ts_codes(code: str) -> List[str]:
@@ -173,6 +174,7 @@ class DCABacktestEngine:
         """
         # Fetch price data
         price_df = self.build_price_frame(codes, start_date, end_date)
+        self.price_df = price_df  # Expose for any downstream consumers
 
         # Initialize tracking
         portfolio_value = []
@@ -425,6 +427,12 @@ class DCABacktestEngine:
         if price_series is None or price_series.empty:
             raise ValueError(f"Failed to fetch price data for {code}")
 
+        # Keep a dataframe copy for consumers that rely on price_df
+        try:
+            self.price_df = price_series.to_frame(name=code)
+        except Exception:
+            self.price_df = None
+
         diagnostics = {
             "price_rows": len(price_series),
             "price_start": price_series.index.min(),
@@ -451,7 +459,8 @@ class DCABacktestEngine:
         portfolio_value = []
         portfolio_dates = []
         holdings = 0
-        cost_basis = 0.0
+        cost_basis = 0.0  # Total capital invested (including cash)
+        holdings_cost = 0.0  # Cost basis for holdings only (for take-profit calculation)
         cash = initial_capital  # Track idle cash
         transactions = []
         strategy_metrics = []
@@ -516,6 +525,7 @@ class DCABacktestEngine:
                             shares = (actual_investment - commission) / execution_price
                             holdings += shares
                             cost_basis += actual_investment
+                            holdings_cost += actual_investment  # Track cost of holdings
                             cash -= actual_investment  # Deduct from cash
                             net_invested = actual_investment - commission
 
@@ -551,7 +561,17 @@ class DCABacktestEngine:
             
             # Take-profit logic
             if trailing_params and holdings > 0:
-                current_return = (portfolio_val - cost_basis) / cost_basis if cost_basis > 0 else 0
+                # Calculate return based on selected method
+                return_calc_method = trailing_params.get("return_calc_method", "holdings_only")
+                holdings_value = holdings * current_price if current_price > 0 else 0
+                
+                if return_calc_method == "holdings_only":
+                    # Holdings-only return (default)
+                    current_return = (holdings_value - holdings_cost) / holdings_cost if holdings_cost > 0 else 0
+                else:
+                    # Total portfolio return (including cash)
+                    total_invested = cost_basis + initial_capital
+                    current_return = (portfolio_val - total_invested) / total_invested if total_invested > 0 else 0
                 
                 # Update highest value
                 if portfolio_val > highest_value:
@@ -574,6 +594,7 @@ class DCABacktestEngine:
                             "commission": commission,
                         })
                         holdings = 0
+                        holdings_cost = 0.0  # Reset holdings cost
                         is_stopped_out = True
                         stop_out_date = trade_date
                         stop_out_price = current_price
@@ -601,6 +622,7 @@ class DCABacktestEngine:
                                 "commission": commission,
                             })
                             holdings = 0
+                            holdings_cost = 0.0  # Reset holdings cost
                             is_stopped_out = True
                             stop_out_date = trade_date
                             stop_out_price = current_price
@@ -616,6 +638,9 @@ class DCABacktestEngine:
                         is_stopped_out = False
                         take_profit_activated = False
                         highest_value = portfolio_val
+                        # Update max_total_investment to current portfolio value (cash after selling)
+                        if max_total_investment > 0:
+                            max_total_investment = cash  # Use current cash as new investment cap
                         
                 elif reentry_mode == "price":
                     reentry_drop = trailing_params.get("reentry_drop", 0.15)
@@ -623,6 +648,9 @@ class DCABacktestEngine:
                         is_stopped_out = False
                         take_profit_activated = False
                         highest_value = portfolio_val
+                        # Update max_total_investment to current portfolio value (cash after selling)
+                        if max_total_investment > 0:
+                            max_total_investment = cash  # Use current cash as new investment cap
             
             portfolio_value.append(portfolio_val)
             portfolio_dates.append(trade_date)
@@ -669,6 +697,7 @@ class DCABacktestEngine:
             "final_value": final_total_value,
             "cash_balance": cash,
             "diagnostics": diagnostics,
+            "price_series": price_series,  # Add price data for benchmark comparison
         }
 
     @staticmethod
