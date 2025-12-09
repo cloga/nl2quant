@@ -222,6 +222,23 @@ def render_backtest_results(result, context):
 
     st.dataframe(pd.DataFrame(comparison_rows), width='stretch', hide_index=True)
 
+    with st.expander("ℹ️ 核心指标含义", expanded=False):
+        st.markdown(
+            """
+            - **总投资额**：回测期内投入的外部资金总和（不含回笼再投资的现金）。
+            - **期末资产**：回测结束时的总资产（持仓市值 + 现金）。
+            - **总收益率**：期末资产相对总投资额的累计收益百分比。
+            - **年化收益 (CAGR)**：将总收益折算成年化的复合增长率。
+            - **Sharpe 比率**：每单位总波动获得的超额收益，越高越好。
+            - **Sortino 比率**：只考虑下行波动的风险调整收益，越高越好。
+            - **Calmar 比率**：年化收益除以最大回撤，衡量收益相对回撤的性价比。
+            - **最大回撤**：从最高点到最低点的最大跌幅，越小越稳健。
+            - **年化波动率**：收益率的波动幅度年化后结果，越低越稳定。
+            - **月度胜率**：月度收益为正的比例，体现收益稳定性。
+            - **回测天数**：本次回测覆盖的自然日天数。
+            """
+        )
+
     st.markdown("### 📈 净值曲线与投资节点")
     equity_curve = result["equity_curve"]
     transactions = result["transactions"]
@@ -235,6 +252,7 @@ def render_backtest_results(result, context):
             name="组合净值",
             line=dict(color="royalblue", width=2),
             fill="tozeroy",
+            hovertemplate="<b>组合净值</b><br>日期: %{x|%Y-%m-%d}<br>资产: ¥%{y:,.0f}<extra></extra>",
         )
     )
 
@@ -256,7 +274,7 @@ def render_backtest_results(result, context):
                     mode="markers",
                     name="买入点",
                     marker=dict(color="green", size=8, symbol="triangle-up"),
-                    hovertemplate="<b>买入</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
+                    hovertemplate="<b>买入</b><br>日期: %{x|%Y-%m-%d}<br>资产: ¥%{y:,.0f}<extra></extra>",
                 )
             )
 
@@ -277,7 +295,7 @@ def render_backtest_results(result, context):
                     mode="markers",
                     name="止盈卖出",
                     marker=dict(color="red", size=10, symbol="triangle-down"),
-                    hovertemplate="<b>卖出</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
+                    hovertemplate="<b>卖出</b><br>日期: %{x|%Y-%m-%d}<br>资产: ¥%{y:,.0f}<extra></extra>",
                 )
             )
 
@@ -314,6 +332,7 @@ def render_backtest_results(result, context):
         height=450,
         template="plotly_white",
     )
+    fig_equity.update_xaxes(hoverformat="%Y-%m-%d")
     st.plotly_chart(fig_equity, width='stretch')
 
     st.markdown("### 💼 期末持仓")
