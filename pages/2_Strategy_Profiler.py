@@ -680,31 +680,24 @@ if run_btn:
             first_metrics = first_result.get("metrics", {})
             total_invested_first = first_metrics.get("total_invested", 0)
             price_series = first_result.get("result", {}).get("price_series") if isinstance(first_result.get("result"), dict) else None
-            if total_invested_first and price_series is not None and hasattr(price_series, "empty") and not price_series.empty:
-                start_price = price_series.iloc[0]
-                shares = total_invested_first / start_price if start_price else 0
-                bh_equity = price_series * shares
-                final_bh = bh_equity.iloc[-1]
-                total_return_bh = (final_bh - total_invested_first) / total_invested_first * 100 if total_invested_first else 0
-                total_days = first_metrics.get("total_days", 0) or 0
-                cagr_bh = None
-                if total_days > 0:
-                    try:
-                        rtn = total_return_bh / 100
-                        cagr_bh = ((1 + rtn) ** (365 / total_days) - 1) * 100
-                    except Exception:
-                        cagr_bh = None
+            if total_invested_first and price_series is not None and hasattr(price_series, "empty"):
+                price_series = price_series.dropna()
+                if not price_series.empty and len(price_series) > 1:
+                    start_price = price_series.iloc[0]
+                    shares = total_invested_first / start_price if start_price else 0
+                    bh_equity = price_series * shares
+                bh_metrics = DCABacktestEngine.compute_metrics_from_equity(bh_equity, total_invested_first)
                 bh_row = {
                     "策略": "Buy&Hold",
                     "策略类型": "benchmark",
-                    "总投资额 (¥)": total_invested_first,
-                    "期末资产 (¥)": final_bh,
-                    "总收益率": total_return_bh,
-                    "CAGR": cagr_bh if cagr_bh is not None else 0,
-                    "年化波动": None,
-                    "Sharpe": None,
+                    "总投资额 (¥)": bh_metrics.get("total_invested", total_invested_first),
+                    "期末资产 (¥)": bh_metrics.get("final_value", 0),
+                    "总收益率": bh_metrics.get("total_return_pct"),
+                    "CAGR": bh_metrics.get("cagr_pct"),
+                    "年化波动": bh_metrics.get("volatility_pct"),
+                    "Sharpe": bh_metrics.get("sharpe_ratio"),
                     "Sortino": None,
-                    "最大回撤": None,
+                    "最大回撤": bh_metrics.get("max_drawdown_pct"),
                     "Calmar": None,
                 }
         except Exception:
@@ -745,9 +738,9 @@ if run_btn:
         display_df["总投资额 (¥)"] = display_df["总投资额 (¥)"].map(lambda x: f"{x:,.0f}")
         display_df["期末资产 (¥)"] = display_df["期末资产 (¥)"].map(lambda x: f"{x:,.0f}")
         for col in ["总收益率", "CAGR", "年化波动", "最大回撤"]:
-            display_df[col] = display_df[col].map(lambda x: f"{x:.2f}%")
+            display_df[col] = display_df[col].map(lambda x: "-" if x is None or pd.isna(x) else f"{x:.2f}%")
         for col in ["Sharpe", "Sortino", "Calmar"]:
-            display_df[col] = display_df[col].map(lambda x: f"{x:.2f}")
+            display_df[col] = display_df[col].map(lambda x: "-" if x is None or pd.isna(x) else f"{x:.2f}")
 
         st.dataframe(display_df, width='stretch')
 
@@ -888,11 +881,18 @@ if run_btn:
         # Analyst Agent (LLM-based insight across strategies)
         # ================================================================
         try:
-            best_row = comparison_df.iloc[0]
+            # 选择首个非基准策略作为分析对象，避免 Buy&Hold 不在 results_dict 中导致报错
+            non_benchmark_df = comparison_df[comparison_df["策略类型"] != "benchmark"]
+            target_df = non_benchmark_df if not non_benchmark_df.empty else comparison_df
+            best_row = target_df.iloc[0]
             best_label = best_row["策略"]
-            best_strategy_code = results_dict[best_label]["code"]
-            best_metrics = results_dict[best_label]["metrics"]
-            best_result = results_dict[best_label]["result"]
+            best_strategy = results_dict.get(best_label)
+            if not best_strategy:
+                raise ValueError(f"未找到策略 {best_label} 的详细结果")
+
+            best_strategy_code = best_strategy["code"]
+            best_metrics = best_strategy["metrics"]
+            best_result = best_strategy["result"]
 
             equity_curve = best_result.get("equity_curve") if isinstance(best_result, dict) else None
             transactions_df = best_result.get("transactions") if isinstance(best_result, dict) else None
