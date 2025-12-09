@@ -32,6 +32,17 @@ venv.bak/
 *.sqlite
 cache/
 
+# Output files
+outputs/
+*.txt
+!requirements.txt
+!README.md
+
+# Analysis artifacts
+analysis_*.csv
+analysis_*.txt
+*_output.txt
+
 # OS specific
 .DS_Store
 Thumbs.db
