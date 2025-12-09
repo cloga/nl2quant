@@ -12,45 +12,114 @@ from langchain_core.messages import AIMessage
 
 def calculate_benchmark_metrics(strategy_returns, benchmark_returns):
     """
-    Calculate Alpha, Beta, and other benchmark comparison metrics.
+    Calculate a comprehensive set of benchmark and relative metrics so that
+    benchmark comparison surfaces the same depth as strategy metrics.
     """
     # Align the two series
-    combined = pd.concat([strategy_returns, benchmark_returns], axis=1, join='inner')
-    combined.columns = ['strategy', 'benchmark']
+    combined = pd.concat([strategy_returns, benchmark_returns], axis=1, join="inner")
+    combined.columns = ["strategy", "benchmark"]
     combined = combined.dropna()
-    
-    if combined.empty or len(combined) < 30:
+
+    if combined.empty or len(combined) < 10:
         return {}
-    
-    strat_ret = combined['strategy']
-    bench_ret = combined['benchmark']
-    
-    # Beta = Cov(strategy, benchmark) / Var(benchmark)
+
+    strat_ret = combined["strategy"]
+    bench_ret = combined["benchmark"]
+
+    rf_daily = 0.02 / 252  # Assume 2% annual risk-free rate
+    rf_annual = 0.02
+
+    def perf_from_returns(ret: pd.Series):
+        total_return = (1 + ret).prod() - 1
+        years = len(ret) / 252 if len(ret) > 0 else 0
+        annual_return = (1 + total_return) ** (1 / years) - 1 if years > 0 else 0
+
+        vol = ret.std() * np.sqrt(252) if len(ret) > 1 else 0
+        downside = ret[ret < 0]
+        downside_vol = downside.std() * np.sqrt(252) if len(downside) > 0 else 0
+
+        sharpe = (annual_return - rf_annual) / vol if vol > 0 else 0
+        sortino = (annual_return - rf_annual) / downside_vol if downside_vol > 0 else 0
+
+        equity_curve = (1 + ret).cumprod()
+        rolling_max = equity_curve.cummax()
+        drawdown = equity_curve / rolling_max - 1
+        max_dd = drawdown.min() if not drawdown.empty else 0
+        calmar = annual_return / abs(max_dd) if max_dd != 0 else 0
+
+        win_rate = (ret > 0).mean() if len(ret) > 0 else 0
+        pos_sum = ret[ret > 0].sum()
+        neg_sum = ret[ret < 0].sum()
+        loss_denom = abs(neg_sum)
+        profit_factor = pos_sum / loss_denom if loss_denom > 0 else 0
+        omega = pos_sum / loss_denom if loss_denom > 0 else 0
+
+        expectancy = ret.mean() if len(ret) > 0 else 0
+        sqn = (expectancy / ret.std()) * np.sqrt(len(ret)) if ret.std() > 0 else 0
+
+        return {
+            "total_return": total_return,
+            "annual_return": annual_return,
+            "volatility": vol,
+            "sharpe": sharpe,
+            "sortino": sortino,
+            "calmar": calmar,
+            "max_drawdown": max_dd,
+            "win_rate": win_rate,
+            "profit_factor": profit_factor,
+            "omega_ratio": omega,
+            "expectancy": expectancy,
+            "sqn": sqn,
+            "observations": len(ret),
+        }
+
+    strat_perf = perf_from_returns(strat_ret)
+    bench_perf = perf_from_returns(bench_ret)
+
+    # Relative metrics
     cov_matrix = np.cov(strat_ret, bench_ret)
     beta = cov_matrix[0, 1] / cov_matrix[1, 1] if cov_matrix[1, 1] != 0 else 0
-    
-    # Alpha (annualized) = Strategy Return - Beta * Benchmark Return
-    risk_free_rate = 0.02 / 252  # Assume 2% annual risk-free rate
-    alpha_daily = strat_ret.mean() - risk_free_rate - beta * (bench_ret.mean() - risk_free_rate)
+
+    alpha_daily = strat_ret.mean() - rf_daily - beta * (bench_ret.mean() - rf_daily)
     alpha_annual = alpha_daily * 252
-    
-    # Tracking Error = Std(Strategy - Benchmark)
+
     tracking_diff = strat_ret - bench_ret
     tracking_error = tracking_diff.std() * np.sqrt(252)
-    
-    # Information Ratio = (Strategy Return - Benchmark Return) / Tracking Error
-    excess_return = (strat_ret.mean() - bench_ret.mean()) * 252
-    information_ratio = excess_return / tracking_error if tracking_error != 0 else 0
-    
-    # Correlation
+
+    excess_return_annual = strat_perf["annual_return"] - bench_perf["annual_return"]
+    active_return_annual = tracking_diff.mean() * 252
+    information_ratio = (
+        active_return_annual / tracking_error if tracking_error != 0 else 0
+    )
+
     correlation = strat_ret.corr(bench_ret)
-    
+    r_squared = correlation**2 if correlation is not None else 0
+
     return {
+        # Benchmark absolute metrics
+        "Benchmark Total Return": bench_perf["total_return"],
+        "Benchmark Annualized Return": bench_perf["annual_return"],
+        "Benchmark Volatility": bench_perf["volatility"],
+        "Benchmark Sharpe Ratio": bench_perf["sharpe"],
+        "Benchmark Sortino Ratio": bench_perf["sortino"],
+        "Benchmark Calmar Ratio": bench_perf["calmar"],
+        "Benchmark Max Drawdown": bench_perf["max_drawdown"],
+        "Benchmark Win Rate": bench_perf["win_rate"],
+        "Benchmark Profit Factor": bench_perf["profit_factor"],
+        "Benchmark Omega Ratio": bench_perf["omega_ratio"],
+        "Benchmark Expectancy": bench_perf["expectancy"],
+        "Benchmark SQN": bench_perf["sqn"],
+        "Benchmark Observations": bench_perf["observations"],
+
+        # Relative metrics
+        "Excess Total Return": strat_perf["total_return"] - bench_perf["total_return"],
+        "Excess Annualized Return": excess_return_annual,
         "Alpha (Annualized)": alpha_annual,
         "Beta": beta,
         "Tracking Error": tracking_error,
         "Information Ratio": information_ratio,
-        "Correlation": correlation
+        "Correlation": correlation,
+        "R-Squared": r_squared,
     }
 
 def exec_agent(state: AgentState):

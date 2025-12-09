@@ -16,6 +16,10 @@ from app.config import Config
 class DCABacktestEngine:
     """Engine for running DCA (定投) backtests on ETF baskets."""
 
+    # Simple in-memory caches for fetched market/valuation data
+    PRICE_CACHE: Dict = {}
+    VALUATION_CACHE: Dict = {}
+
     def __init__(self, tushare_token: str = None):
         """Initialize the DCA backtest engine."""
         self.token = tushare_token or Config.TUSHARE_TOKEN
@@ -25,6 +29,8 @@ class DCABacktestEngine:
         self.max_retries = 3
         self.retry_delay = 2
         self.price_df = None  # Compatibility hook for callers that expect cached price data
+        self.last_price_cache_hit = False
+        self.last_valuation_cache_hit = False
 
     @staticmethod
     def candidate_ts_codes(code: str) -> List[str]:
@@ -86,7 +92,16 @@ class DCABacktestEngine:
         """Fetch asset close prices (stocks/ETFs/indices) with fallbacks and retries."""
         import time
         last_exc = None
+        self.last_price_cache_hit = False
+        
+        # Normalize code to ts_code format for consistent cache key
         ts_codes = self.candidate_ts_codes(code)
+        normalized_code = ts_codes[0] if ts_codes else code
+        
+        cache_key = (normalized_code, start_date, end_date)
+        if cache_key in self.PRICE_CACHE:
+            self.last_price_cache_hit = True
+            return self.PRICE_CACHE[cache_key].copy()
 
         # Try multiple data sources: fund (ETF), stock, and index
         api_sources = [
@@ -110,7 +125,10 @@ class DCABacktestEngine:
                                         df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d")
                                         df = df.sort_values("trade_date")
                                         df = df.drop_duplicates(subset=["trade_date"], keep="first")
-                                        return df.set_index("trade_date")["close"]
+                                        series = df.set_index("trade_date")["close"]
+                                        # Cache with the normalized key, not the original code
+                                        self.PRICE_CACHE[cache_key] = series
+                                        return series.copy()
                                 except:
                                     continue
                         else:
@@ -119,7 +137,10 @@ class DCABacktestEngine:
                                 df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d")
                                 df = df.sort_values("trade_date")
                                 df = df.drop_duplicates(subset=["trade_date"], keep="first")
-                                return df.set_index("trade_date")["close"]
+                                series = df.set_index("trade_date")["close"]
+                                # Cache with the normalized key, not the original code
+                                self.PRICE_CACHE[cache_key] = series
+                                return series.copy()
                     except Exception as e:
                         last_exc = e
                         if attempt < self.max_retries - 1:
@@ -273,28 +294,36 @@ class DCABacktestEngine:
         }
 
     @staticmethod
-    def _compute_metrics(equity_curve: pd.Series, cost_basis: Dict) -> Dict:
-        """Compute performance metrics from equity curve."""
+    def _compute_metrics(
+        equity_curve: pd.Series,
+        cost_basis: Optional[Dict] = None,
+        total_invested: Optional[float] = None,
+    ) -> Dict:
+        """Compute performance metrics from an equity curve.
+
+        Args:
+            equity_curve: Time-indexed equity series.
+            cost_basis: Optional per-asset cost basis dictionary.
+            total_invested: Optional explicit total invested override.
+        """
         if len(equity_curve) < 2:
             return {}
 
-        total_invested = sum(cost_basis.values())
+        if total_invested is None:
+            total_invested = sum(cost_basis.values()) if cost_basis else 0.0
+
         final_value = equity_curve.iloc[-1]
         total_return = (final_value - total_invested) / total_invested if total_invested > 0 else 0
 
-        # Calculate CAGR
         days = (equity_curve.index[-1] - equity_curve.index[0]).days
         years = days / 365.25
         cagr = (final_value / total_invested) ** (1 / years) - 1 if years > 0 and total_invested > 0 else 0
 
-        # Calculate volatility
         returns = equity_curve.pct_change().dropna()
         volatility = returns.std() * np.sqrt(252)
 
-        # Calculate Sharpe ratio
         sharpe = (cagr - 0) / volatility * np.sqrt(1) if volatility > 0 else 0
 
-        # Calculate max drawdown
         cummax = equity_curve.expanding().max()
         drawdown = (equity_curve - cummax) / cummax
         max_drawdown = drawdown.min()
@@ -312,6 +341,15 @@ class DCABacktestEngine:
         }
 
     @staticmethod
+    def compute_metrics_from_equity(equity_curve: pd.Series, total_invested: float) -> Dict:
+        """Public helper to compute metrics when only equity curve and invested amount are known."""
+        return DCABacktestEngine._compute_metrics(
+            equity_curve=equity_curve,
+            cost_basis=None,
+            total_invested=total_invested,
+        )
+
+    @staticmethod
     def get_monthly_snapshots(
         equity_curve: pd.Series, positions_history: List[Dict]
     ) -> pd.DataFrame:
@@ -327,10 +365,16 @@ class DCABacktestEngine:
     ) -> Optional[pd.DataFrame]:
         """Fetch PE-TTM and PB valuation data from Tushare."""
         try:
+            self.last_valuation_cache_hit = False
             # Normalize ts_code
             if "." not in ts_code:
                 codes = self.candidate_ts_codes(ts_code)
                 ts_code = codes[0]
+
+            cache_key = (ts_code, start_date, end_date)
+            if cache_key in self.VALUATION_CACHE:
+                self.last_valuation_cache_hit = True
+                return self.VALUATION_CACHE[cache_key].copy()
 
             df = self.fetch_with_chunks(
                 "stock_valuation", ts_code, start_date, end_date
@@ -339,7 +383,9 @@ class DCABacktestEngine:
                 df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d")
                 df = df.sort_values("trade_date")
                 df = df.drop_duplicates(subset=["trade_date"], keep="first")
-                return df.set_index("trade_date")[["pe_ttm", "pb"]]
+                df = df.set_index("trade_date")[ ["pe_ttm", "pb"] ]
+                self.VALUATION_CACHE[cache_key] = df
+                return df.copy()
         except Exception as e:
             print(f"Warning: Failed to fetch valuation data for {ts_code}: {e}")
         return None
@@ -437,6 +483,7 @@ class DCABacktestEngine:
             "price_rows": len(price_series),
             "price_start": price_series.index.min(),
             "price_end": price_series.index.max(),
+            "price_cache_hit": self.last_price_cache_hit,
         }
 
         # Fetch valuation data if needed
@@ -444,8 +491,10 @@ class DCABacktestEngine:
         if strategy_type in ["smart_pe", "smart_pb"]:
             valuation_df = self.fetch_valuation_data(code, start_date, end_date)
             diagnostics["valuation_rows"] = 0 if valuation_df is None else len(valuation_df)
+            diagnostics["valuation_cache_hit"] = self.last_valuation_cache_hit
         else:
             diagnostics["valuation_rows"] = 0
+            diagnostics["valuation_cache_hit"] = False
 
         # Set default smart parameters
         if smart_params is None:
@@ -459,11 +508,15 @@ class DCABacktestEngine:
         portfolio_value = []
         portfolio_dates = []
         holdings = 0
-        cost_basis = 0.0  # Total capital invested (including cash)
+        cost_basis = 0.0  # Total capital invested in current round (external only)
         holdings_cost = 0.0  # Cost basis for holdings only (for take-profit calculation)
-        cash = initial_capital  # Track idle cash
+        cash = initial_capital  # Track idle cash for current round
         transactions = []
         strategy_metrics = []
+
+        # Track lifetime external capital (初始本金 + 所有外部追加), 不因止盈重置
+        initial_external_capital = initial_capital
+        external_contributions = 0.0
         
         # Take-profit tracking
         is_stopped_out = False
@@ -489,44 +542,51 @@ class DCABacktestEngine:
 
             # Check if it's an investment date and not stopped out
             if trade_date in investment_dates and not is_stopped_out:
-                # Check if max total investment limit is reached
-                if max_total_investment > 0 and cost_basis >= max_total_investment:
-                    # Skip investment if limit reached
-                    pass
-                else:
-                    # Calculate investment amount based on strategy
-                    investment_amount = self._calculate_investment_amount(
-                        trade_date,
-                        monthly_investment,
-                        price_series,
-                        valuation_df,
-                        strategy_type,
-                        smart_params,
-                    )
+                # Calculate investment amount based on strategy
+                investment_amount = self._calculate_investment_amount(
+                    trade_date,
+                    monthly_investment,
+                    price_series,
+                    valuation_df,
+                    strategy_type,
+                    smart_params,
+                )
 
-                    if investment_amount > 0 and current_price > 0:
-                        # Check if this investment would exceed the limit
-                        if max_total_investment > 0:
-                            remaining_budget = max_total_investment - cost_basis
-                            investment_amount = min(investment_amount, remaining_budget)
-                        
-                        if investment_amount > 0:
-                            # Use cash if available, otherwise assume external funding
-                            actual_investment = min(investment_amount, cash) if cash > 0 else investment_amount
-                            
-                            # Calculate commission
+                if investment_amount > 0 and current_price > 0:
+                    # Allow reinvesting existing cash even after hitting external cap.
+                    # External cap only limits new external contributions, not recycled cash/profits.
+                    external_cap = max_total_investment if max_total_investment > 0 else float("inf")
+                    external_spent = initial_external_capital + external_contributions
+                    remaining_external = max(external_cap - external_spent, 0)
+
+                    # If no external room and no cash, skip this date
+                    if remaining_external <= 0 and cash <= 0:
+                        pass
+                    else:
+                        # How much external capital is needed for this order?
+                        external_needed = max(investment_amount - cash, 0)
+                        external_used = min(external_needed, remaining_external)
+
+                        # Final investable amount = current cash + allowed external
+                        investable_amount = cash + external_used
+                        actual_investment = min(investment_amount, investable_amount)
+
+                        if actual_investment > 0:
+                            # Add only the external portion to cost_basis
+                            if external_used > 0:
+                                cash += external_used
+                                cost_basis += external_used
+                                external_contributions += external_used
+
                             commission = max(
                                 actual_investment * commission_rate, min_commission
                             )
-                            # Apply slippage
                             execution_price = current_price * (1 + slippage)
 
-                            # Execute transaction
                             shares = (actual_investment - commission) / execution_price
                             holdings += shares
-                            cost_basis += actual_investment
-                            holdings_cost += actual_investment  # Track cost of holdings
-                            cash -= actual_investment  # Deduct from cash
+                            holdings_cost += actual_investment
+                            cash -= actual_investment
                             net_invested = actual_investment - commission
 
                             transactions.append(
@@ -539,8 +599,8 @@ class DCABacktestEngine:
                                     "commission": commission,
                                     "net_invested": net_invested,
                                     "shares": shares,
-                        }
-                    )
+                                }
+                            )
 
                     # Record strategy metric for this date
                     if strategy_type == "smart_pe" and valuation_df is not None:
@@ -598,6 +658,10 @@ class DCABacktestEngine:
                         is_stopped_out = True
                         stop_out_date = trade_date
                         stop_out_price = current_price
+
+                        # Reset baseline: treat realized cash as the new round capital ceiling
+                        cost_basis = 0.0
+                        initial_capital = cash
                 
                 elif trailing_params.get("mode") == "trailing":
                     activation_return = trailing_params.get("activation_return", 0.3)
@@ -626,6 +690,10 @@ class DCABacktestEngine:
                             is_stopped_out = True
                             stop_out_date = trade_date
                             stop_out_price = current_price
+
+                            # Reset baseline: realized cash becomes the new round capital ceiling
+                            cost_basis = 0.0
+                            initial_capital = cash
             
             # Check re-entry conditions
             if is_stopped_out and trailing_params:
@@ -638,9 +706,6 @@ class DCABacktestEngine:
                         is_stopped_out = False
                         take_profit_activated = False
                         highest_value = portfolio_val
-                        # Update max_total_investment to current portfolio value (cash after selling)
-                        if max_total_investment > 0:
-                            max_total_investment = cash  # Use current cash as new investment cap
                         
                 elif reentry_mode == "price":
                     reentry_drop = trailing_params.get("reentry_drop", 0.15)
@@ -648,9 +713,6 @@ class DCABacktestEngine:
                         is_stopped_out = False
                         take_profit_activated = False
                         highest_value = portfolio_val
-                        # Update max_total_investment to current portfolio value (cash after selling)
-                        if max_total_investment > 0:
-                            max_total_investment = cash  # Use current cash as new investment cap
             
             portfolio_value.append(portfolio_val)
             portfolio_dates.append(trade_date)
@@ -658,19 +720,19 @@ class DCABacktestEngine:
         # Build equity curve
         equity_curve = pd.Series(portfolio_value, index=portfolio_dates)
 
-        # Calculate comprehensive metrics (include initial capital in total invested)
-        total_capital_deployed = cost_basis + initial_capital
+        # Calculate comprehensive metrics using lifetime external capital as denominator
+        external_spent = initial_external_capital + external_contributions
         metrics = self._compute_extended_metrics(
-            equity_curve, total_capital_deployed, benchmark_strategy="plain"
+            equity_curve, external_spent, benchmark_strategy="plain"
         )
 
         # Prepare final position (including cash)
         final_price = price_series.iloc[-1]
         final_holdings_value = holdings * final_price if final_price > 0 else 0
         final_total_value = final_holdings_value + cash
-        total_capital_deployed = cost_basis + initial_capital
-        gain = final_total_value - total_capital_deployed
-        gain_pct = (gain / total_capital_deployed * 100) if total_capital_deployed > 0 else 0
+        investment_baseline = external_spent
+        gain = final_total_value - investment_baseline
+        gain_pct = (gain / investment_baseline * 100) if investment_baseline > 0 else 0
 
         final_position = {
             "code": code,
@@ -693,7 +755,7 @@ class DCABacktestEngine:
             "transactions": pd.DataFrame(transactions),
             "strategy_metrics": pd.DataFrame(strategy_metrics) if strategy_metrics else None,
             "strategy_type": strategy_type,
-            "total_invested": cost_basis,
+            "total_invested": external_spent,
             "final_value": final_total_value,
             "cash_balance": cash,
             "diagnostics": diagnostics,

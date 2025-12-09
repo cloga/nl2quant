@@ -23,7 +23,7 @@ from app.dca_backtest_engine import DCABacktestEngine
 
 
 def render_backtest_results(result, context):
-    """Render full backtest outputs using cached context."""
+    """Render full backtest outputs using cached context and precomputed benchmarks."""
     if result is None or context is None:
         return
 
@@ -43,6 +43,7 @@ def render_backtest_results(result, context):
     trailing_params = context.get("trailing_params")
     enable_benchmark = context.get("enable_benchmark", False)
     benchmark_options = context.get("benchmark_options", []) or []
+    benchmark_results_ctx = context.get("benchmark_results") or {}
     max_total_investment = context.get("max_total_investment", 0.0)
     elapsed_time = context.get("elapsed_time")
 
@@ -75,7 +76,7 @@ def render_backtest_results(result, context):
 • 频率: `{freq_display.get(rebalance_freq, rebalance_freq)}{freq_detail}` | 金额: `¥{monthly_investment:,.0f}`
 
 **资金与风控：**
-• 初始资金: `¥{initial_capital:,.0f}` | 闲置收益: `{risk_free_rate*100:.1f}%`
+• 首期底仓: `¥{initial_capital:,.0f}` | 闲置收益: `{risk_free_rate*100:.1f}%`
 • 投资上限: `¥{max_total_investment:,.0f}` | 止盈: `{tp_info}`
 
 **成本参数：**
@@ -131,21 +132,12 @@ def render_backtest_results(result, context):
     else:
         st.warning("⚠️ 未产生任何交易记录")
 
-    # Benchmark comparison
-    benchmark_results = {}
-    if enable_benchmark and benchmark_options:
-        st.markdown("### 📊 基准对比")
-
+    # Benchmark results (precomputed during run; avoid reruns here)
+    benchmark_results = benchmark_results_ctx if isinstance(benchmark_results_ctx, dict) else {}
+    if enable_benchmark and benchmark_options and not benchmark_results:
         equity_curve = result["equity_curve"]
         total_invested = result["metrics"].get("total_invested", 0)
         price_series = result.get("price_series")
-
-        if not isinstance(price_series, pd.Series):
-            engine_price = getattr(DCABacktestEngine(), "price_df", None)
-            if isinstance(engine_price, pd.DataFrame):
-                price_series = engine_price.iloc[:, 0]
-            elif isinstance(engine_price, pd.Series):
-                price_series = engine_price
 
         if "lump_sum" in benchmark_options and total_invested > 0:
             try:
@@ -158,107 +150,75 @@ def render_backtest_results(result, context):
                     lump_return = (final_lump - total_invested) / total_invested * 100
 
                     benchmark_results["lump_sum"] = {
+                        "label": "一次性买入",
                         "equity": lump_sum_equity,
-                        "final_value": final_lump,
-                        "return_pct": lump_return,
+                        "metrics": {
+                            "total_invested": total_invested,
+                            "final_value": final_lump,
+                            "total_return_pct": lump_return,
+                        },
                     }
                 else:
                     st.caption("⚠️ 一次性买入基准缺少价格数据，已跳过")
             except Exception as e:
                 st.caption(f"⚠️ 一次性买入基准计算失败: {str(e)}")
 
-        if "plain_dca" in benchmark_options and strategy_type != "plain":
-            try:
-                engine = DCABacktestEngine()
-                plain_result = engine.run_smart_dca_backtest(
-                    code=code,
-                    monthly_investment=monthly_investment,
-                    start_date=start_date_str,
-                    end_date=end_date_str,
-                    strategy_type="plain",
-                    smart_params=None,
-                    rebalance_freq=rebalance_freq,
-                    freq_day=freq_day,
-                    commission_rate=commission_rate,
-                    min_commission=min_commission,
-                    slippage=slippage,
-                    initial_capital=initial_capital,
-                    risk_free_rate=risk_free_rate,
-                    trailing_params=trailing_params if enable_take_profit else None,
-                    max_total_investment=max_total_investment,
-                )
-                benchmark_results["plain_dca"] = {
-                    "equity": plain_result["equity_curve"],
-                    "final_value": plain_result["metrics"].get("final_value", 0),
-                    "return_pct": plain_result["metrics"].get("total_return_pct", 0),
-                }
-            except Exception as e:
-                st.caption(f"⚠️ 普通定投基准计算失败: {str(e)}")
-
-        if benchmark_results:
-            current_return = result["metrics"].get("total_return_pct", 0)
-            current_final = result["metrics"].get("final_value", 0)
-
-            comparison_data = [{
-                "策略": strategy_display.get(strategy_type, strategy_type),
-                "期末资产": f"¥{current_final:,.0f}",
-                "总收益率": f"{current_return:.2f}%",
-                "相对收益": "-",
-            }]
-
-            if "lump_sum" in benchmark_results:
-                br = benchmark_results["lump_sum"]
-                alpha = current_return - br["return_pct"]
-                comparison_data.append({
-                    "策略": "一次性买入",
-                    "期末资产": f"¥{br['final_value']:,.0f}",
-                    "总收益率": f"{br['return_pct']:.2f}%",
-                    "相对收益": f"{alpha:+.2f}%",
-                })
-
-            if "plain_dca" in benchmark_results:
-                br = benchmark_results["plain_dca"]
-                alpha = current_return - br["return_pct"]
-                comparison_data.append({
-                    "策略": "普通定投",
-                    "期末资产": f"¥{br['final_value']:,.0f}",
-                    "总收益率": f"{br['return_pct']:.2f}%",
-                    "相对收益": f"{alpha:+.2f}%",
-                })
-
-            st.dataframe(pd.DataFrame(comparison_data), width='stretch', hide_index=True)
-            st.session_state.benchmark_results = benchmark_results
-
     metrics = result["metrics"]
-    st.markdown("### 📊 核心指标")
+    st.markdown("### 📊 核心指标（含基准对比）")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.metric("总投资额", f"¥{metrics.get('total_invested', 0):,.0f}")
-    with col2:
-        st.metric("期末资产", f"¥{metrics.get('final_value', 0):,.0f}")
-    with col3:
-        st.metric("总收益率", f"{metrics.get('total_return_pct', 0):.2f}%")
-    with col4:
-        st.metric("年化收益 (CAGR)", f"{metrics.get('cagr_pct', 0):.2f}%")
-    with col5:
-        st.metric("Sharpe比率", f"{metrics.get('sharpe_ratio', 0):.2f}")
+    def _format_value(value, kind="number"):
+        if value is None or (isinstance(value, float) and np.isnan(value)):
+            return "-"
+        if kind == "currency":
+            return f"¥{value:,.0f}"
+        if kind == "pct":
+            return f"{value:.2f}%"
+        if kind == "ratio":
+            return f"{value:.2f}"
+        if kind == "days":
+            return f"{int(value)} 天"
+        return f"{value:,.2f}"
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Sortino比率", f"{metrics.get('sortino_ratio', 0):.2f}")
-    with col2:
-        st.metric("Calmar比率", f"{metrics.get('calmar_ratio', 0):.2f}")
-    with col3:
-        st.metric("最大回撤", f"{metrics.get('max_drawdown_pct', 0):.2f}%")
-    with col4:
-        st.metric("年化波动率", f"{metrics.get('volatility_pct', 0):.2f}%")
+    # Prepare benchmark metrics for per-indicator comparison
+    comparison_targets = {
+        strategy_display.get(strategy_type, strategy_type): metrics
+    }
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("月度胜率", f"{metrics.get('win_rate_pct', 0):.2f}%")
-    with col2:
-        st.metric("回测天数", f"{metrics.get('total_days', 0)} 天")
+    total_days = metrics.get("total_days", 0) or 0
+
+    for key, br in benchmark_results.items():
+        br_metrics = br.get("metrics", {})
+        # If benchmark lacks CAGR but has total_return_pct, derive a simple CAGR on total_days.
+        if "cagr_pct" not in br_metrics and br_metrics.get("total_return_pct") is not None and total_days > 0:
+            try:
+                rtn = br_metrics["total_return_pct"] / 100
+                br_metrics["cagr_pct"] = ((1 + rtn) ** (365 / total_days) - 1) * 100
+            except Exception:
+                br_metrics["cagr_pct"] = None
+        comparison_targets[br.get("label", key)] = br_metrics
+
+    indicator_plan = [
+        ("总投资额", "total_invested", "currency"),
+        ("期末资产", "final_value", "currency"),
+        ("总收益率", "total_return_pct", "pct"),
+        ("年化收益 (CAGR)", "cagr_pct", "pct"),
+        ("Sharpe比率", "sharpe_ratio", "ratio"),
+        ("Sortino比率", "sortino_ratio", "ratio"),
+        ("Calmar比率", "calmar_ratio", "ratio"),
+        ("最大回撤", "max_drawdown_pct", "pct"),
+        ("年化波动率", "volatility_pct", "pct"),
+        ("月度胜率", "win_rate_pct", "pct"),
+        ("回测天数", "total_days", "days"),
+    ]
+
+    comparison_rows = []
+    for label, key, kind in indicator_plan:
+        row = {"指标": label}
+        for name, values in comparison_targets.items():
+            row[name] = _format_value(values.get(key), kind)
+        comparison_rows.append(row)
+
+    st.dataframe(pd.DataFrame(comparison_rows), width='stretch', hide_index=True)
 
     st.markdown("### 📈 净值曲线与投资节点")
     equity_curve = result["equity_curve"]
@@ -430,35 +390,53 @@ def render_backtest_results(result, context):
     st.markdown("### 📥 导出结果")
     col1, col2, col3 = st.columns(3)
 
-    with col1:
+    render_id = context.get("render_id", "current")
+    cache_key = f"downloads_{render_id}"
+    cache = st.session_state.download_cache.get(cache_key, {})
+
+    if not cache:
         equity_csv = equity_curve.reset_index()
         equity_csv.columns = ["date", "value"]
+        cache["equity_csv"] = equity_csv.to_csv(index=False)
+        cache["equity_name"] = f"dca_equity_{code}_{start_date_str}_{end_date_str}.csv"
+
+        if not position_df.empty:
+            cache["positions_csv"] = position_df.to_csv(index=False)
+            cache["positions_name"] = f"dca_positions_{code}_{end_date_str}.csv"
+
+        if not transactions.empty:
+            cache["transactions_csv"] = transactions.to_csv(index=False)
+            cache["transactions_name"] = f"dca_transactions_{code}_{start_date_str}_{end_date_str}.csv"
+
+        st.session_state.download_cache[cache_key] = cache
+
+    with col1:
         st.download_button(
             label="下载净值曲线",
-            data=equity_csv.to_csv(index=False),
-            file_name=f"dca_equity_{code}_{start_date_str}_{end_date_str}.csv",
+            data=cache.get("equity_csv", ""),
+            file_name=cache.get("equity_name", "dca_equity.csv"),
             mime="text/csv",
-            key=f"download_equity_{context.get('render_id', 'current')}",
+            key=f"download_equity_{render_id}",
         )
 
     with col2:
-        if not position_df.empty:
+        if "positions_csv" in cache:
             st.download_button(
                 label="下载持仓信息",
-                data=position_df.to_csv(index=False),
-                file_name=f"dca_positions_{code}_{end_date_str}.csv",
+                data=cache["positions_csv"],
+                file_name=cache.get("positions_name", "dca_positions.csv"),
                 mime="text/csv",
-                key=f"download_positions_{context.get('render_id', 'current')}",
+                key=f"download_positions_{render_id}",
             )
 
     with col3:
-        if not transactions.empty:
+        if "transactions_csv" in cache:
             st.download_button(
                 label="下载交易记录",
-                data=transactions.to_csv(index=False),
-                file_name=f"dca_transactions_{code}_{start_date_str}_{end_date_str}.csv",
+                data=cache["transactions_csv"],
+                file_name=cache.get("transactions_name", "dca_transactions.csv"),
                 mime="text/csv",
-                key=f"download_transactions_{context.get('render_id', 'current')}",
+                key=f"download_transactions_{render_id}",
             )
 
 # ============================================================================
@@ -523,6 +501,10 @@ if "backtest_result" not in st.session_state:
     st.session_state.backtest_result = None
 if "show_all_transactions" not in st.session_state:
     st.session_state.show_all_transactions = False
+if "last_run_context" not in st.session_state:
+    st.session_state.last_run_context = None
+if "download_cache" not in st.session_state:
+    st.session_state.download_cache = {}
 
 # ============================================================================
 # Page Title
@@ -605,12 +587,12 @@ st.sidebar.markdown("### 投资参数")
 # Capital management
 with st.sidebar.expander("💰 资金管理", expanded=True):
     initial_capital = st.number_input(
-        "初始本金 (元)",
+        "首期底仓 (元)",
         min_value=0.0,
         max_value=10000000.0,
         value=0.0,
         step=10000.0,
-        help="账户初始资金，用于一次性买入对比。设为0则只做定投",
+        help="首期建仓资金（也用于一次性买入基准）；设为 0 则仅做定投",
     )
     
     risk_free_rate = st.slider(
@@ -623,12 +605,12 @@ with st.sidebar.expander("💰 资金管理", expanded=True):
     ) / 100
     
     max_total_investment = st.number_input(
-        "总投入资金量上限 (元)",
+        "初始投入资金上限 (元)",
         min_value=0.0,
         max_value=100000000.0,
         value=1000000.0,
         step=100000.0,
-        help="累计投入达到此金额后停止定投（0表示不限制）",
+        help="外部资金（初始+每期定投）的上限，达到即停止追加；止盈回笼现金不占用此额度（0 表示不限制）",
     )
 
 monthly_investment = st.sidebar.number_input(
@@ -894,7 +876,7 @@ config_text = f"""
 
 **资金与风控：**
 • 初始资金: `¥{initial_capital:,.0f}` | 闲置收益: `{risk_free_rate*100:.1f}%`
-• 投资上限: `¥{max_total_investment:,.0f}` | 止盈: `{tp_info}`
+• 初始投入上限: `¥{max_total_investment:,.0f}` | 止盈: `{tp_info}`
 
 **成本参数：**
 • 佣金: `{commission_rate*10000:.1f}‱` | 最低: `¥{min_commission:.0f}` | 滑点: `{slippage*100:.2f}%`
@@ -952,12 +934,12 @@ if run_backtest_btn:
                 log_text = "🟢 开始初始化...\n"
                 log_display.code(log_text, language="text")
             
+            init_start = time.time()
             engine = DCABacktestEngine()
-            log_text += "✓ 回测引擎初始化完成\n"
-            
-            # Update logs during data fetch
-            log_text += f"🟢 正在获取 {codes[0]} 的价格数据...\n"
-            log_text += f"   时间范围: {start_date_str} - {end_date_str}\n"
+            init_elapsed = time.time() - init_start
+            log_text += f"✓ 回测引擎初始化完成（耗时 {init_elapsed:.3f}s）\n"
+            log_text += f"   - 当前价格缓存: {len(engine.PRICE_CACHE)} 条记录\n"
+            log_text += f"   - 当前估值缓存: {len(engine.VALUATION_CACHE)} 条记录\n"
             with log_container:
                 log_display.code(log_text, language="text")
 
@@ -969,148 +951,116 @@ if run_backtest_btn:
             with progress_container:
                 st.info("⚙️ 正在执行回测模拟...")
             
-            log_text += f"✓ 数据获取完成\n"
-            log_text += f"🟢 开始执行回测:\n"
+            log_text += f"🟢 步骤1: 正在获取 {code} 的行情数据...\n"
+            log_text += f"   时间范围: {start_date_str} - {end_date_str}\n"
+            with log_container:
+                log_display.code(log_text, language="text")
+
+            # Show initial timer
+            interim_elapsed = time.time() - start_time
+            with timer_container:
+                st.metric("⏱️ 当前耗时", f"{interim_elapsed:.1f}s", delta="执行中...")
+
+            fetch_start = time.time()
+            log_text += f"🟢 步骤2: 开始执行回测计算...\n"
+            with log_container:
+                log_display.code(log_text, language="text")
+
+            # Run backtest in a background thread so we can tick the timer while it runs
+            from concurrent.futures import ThreadPoolExecutor
+
+            def _run_backtest():
+                return engine.run_smart_dca_backtest(
+                    code=code,
+                    monthly_investment=monthly_investment,
+                    start_date=start_date_str,
+                    end_date=end_date_str,
+                    strategy_type=strategy_type,
+                    smart_params=smart_params,
+                    rebalance_freq=rebalance_freq,
+                    freq_day=freq_day,
+                    commission_rate=commission_rate,
+                    min_commission=min_commission,
+                    slippage=slippage,
+                    initial_capital=initial_capital,
+                    risk_free_rate=risk_free_rate,
+                    trailing_params=trailing_params if enable_take_profit else None,
+                    max_total_investment=max_total_investment,
+                )
+
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_run_backtest)
+                while not future.done():
+                    interim_elapsed = time.time() - start_time
+                    with timer_container:
+                        st.metric("⏱️ 当前耗时", f"{interim_elapsed:.1f}s", delta="执行中...")
+                    time.sleep(0.2)
+                result = future.result()
+
+            fetch_elapsed = time.time() - fetch_start
+
+            log_text += f"✓ 数据获取与回测完成（耗时 {fetch_elapsed:.2f}s）\n"
+            log_text += (
+                f"   - 缓存: 行情{'命中' if engine.last_price_cache_hit else '未命中'}"
+                f" / 估值{'命中' if engine.last_valuation_cache_hit else '未命中'}\n"
+            )
+            # Show cache debug info when cache miss
+            if not engine.last_price_cache_hit or not engine.last_valuation_cache_hit:
+                ts_codes = engine.candidate_ts_codes(code)
+                normalized_code = ts_codes[0] if ts_codes else code
+                if not engine.last_price_cache_hit:
+                    log_text += f"   - 行情查询键: ({normalized_code}, {start_date_str}, {end_date_str})\n"
+                    log_text += f"   - 行情缓存现有: {len(engine.PRICE_CACHE)} 条\n"
+                if not engine.last_valuation_cache_hit:
+                    log_text += f"   - 估值查询键: ({normalized_code}, {start_date_str}, {end_date_str})\n"
+                    log_text += f"   - 估值缓存现有: {len(engine.VALUATION_CACHE)} 条\n"
+            log_text += f"🟢 回测参数:\n"
             log_text += f"   - 标的: {code} ({strategy_label})\n"
             log_text += f"   - 频率: {freq_label}\n"
             log_text += f"   - 金额: ¥{monthly_investment:,.0f}\n"
             with log_container:
                 log_display.code(log_text, language="text")
             
-            result = engine.run_smart_dca_backtest(
-                code=code,
-                monthly_investment=monthly_investment,
-                start_date=start_date_str,
-                end_date=end_date_str,
-                strategy_type=strategy_type,
-                smart_params=smart_params,
-                rebalance_freq=rebalance_freq,
-                freq_day=freq_day,
-                commission_rate=commission_rate,
-                min_commission=min_commission,
-                slippage=slippage,
-                initial_capital=initial_capital,
-                risk_free_rate=risk_free_rate,
-                trailing_params=trailing_params if enable_take_profit else None,
-                max_total_investment=max_total_investment,
-            )
-            
-            # Store result in session state to preserve state when checkbox changes
-            st.session_state.backtest_result = result
-            
-            elapsed_time = int(time.time() - start_time)
-            
-            log_text += f"✓ 回测模拟完成\n"
-            log_text += f"📊 正在生成结果...\n"
-            with log_container:
-                log_display.code(log_text, language="text")
-            
-            # Display elapsed time with timer
+            # Update timer after backtest completes
+            interim_elapsed = time.time() - start_time
             with timer_container:
-                st.metric("⏱️ 耗时", f"{elapsed_time}s")
-            
-            # Clear progress indicators
-            progress_container.empty()
+                st.metric("⏱️ 当前耗时", f"{interim_elapsed:.1f}s", delta="回测完成")
 
-            # ================================================================
-            # Display Results
-            # ================================================================
-            st.success(f"✅ 回测完成！(耗时 {elapsed_time}s)")
-            
-            # Data diagnostics - show FIRST with detailed timing
-            diag = result.get("diagnostics", {})
-            if diag:
-                ps = diag.get("price_start")
-                pe = diag.get("price_end")
-                ps_str = ps.strftime("%Y-%m-%d") if ps is not None else "-"
-                pe_str = pe.strftime("%Y-%m-%d") if pe is not None else "-"
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("💾 加载价格行数", f"{diag.get('price_rows', 0):,}")
-                with col2:
-                    st.metric("📅 价格覆盖范围", f"{ps_str} → {pe_str}")
-                with col3:
-                    st.metric("⏱️ 执行耗时", f"{elapsed_time}s")
-                
-                if diag.get('valuation_rows', 0) > 0:
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("💹 加载估值行数", f"{diag.get('valuation_rows', 0):,}")
-                    with col2:
-                        st.metric("📊 投资执行日数", f"{diag.get('investment_dates', 0):,}")
-                    with col3:
-                        st.metric("💹 交易成功率", f"{len(result.get('transactions', [])):,} 笔")
-            
-            # Show execution summary
-            transactions_df = result.get("transactions")
-            if transactions_df is not None and not transactions_df.empty:
-                total_transactions = len(transactions_df)
-                buy_transactions = len(transactions_df[transactions_df["action"] == "BUY"])
-                sell_transactions = len(transactions_df[transactions_df["action"].str.contains("SELL", na=False)])
-                
-                # Use actual data range from diagnostics for display
-                diag = result.get("diagnostics", {})
-                ps = diag.get("price_start")
-                pe = diag.get("price_end")
-                actual_start = ps.strftime("%Y%m%d") if ps is not None else start_date_str
-                actual_end = pe.strftime("%Y%m%d") if pe is not None else end_date_str
-                
-                st.info(f"""
-                **交易执行摘要:**
-                - 总交易次数: {total_transactions} 次
-                - 买入次数: {buy_transactions} 次
-                - 卖出次数: {sell_transactions} 次
-                - 回测时长: {actual_start} - {actual_end}
-                """)
-            else:
-                st.warning("⚠️ 未产生任何交易记录")
-
-            # ================================================================
-            # Benchmark Comparison
-            # ================================================================
             benchmark_results = {}
             if enable_benchmark and benchmark_options:
-                st.markdown("### 📊 基准对比")
+                log_text += "🟢 正在计算基准对比...\n"
+                with log_container:
+                    log_display.code(log_text, language="text")
+                
+                # Update timer before benchmark
+                interim_elapsed = time.time() - start_time
+                with timer_container:
+                    st.metric("⏱️ 当前耗时", f"{interim_elapsed:.1f}s", delta="计算基准...")
+                
+                benchmark_start = time.time()
                 
                 equity_curve = result["equity_curve"]
                 total_invested = result["metrics"].get("total_invested", 0)
                 price_series = result.get("price_series")
 
-                # Fallback to engine cached price data if needed
-                if not isinstance(price_series, pd.Series):
-                    engine_price = getattr(engine, "price_df", None)
-                    if isinstance(engine_price, pd.DataFrame):
-                        price_series = engine_price.iloc[:, 0]
-                    elif isinstance(engine_price, pd.Series):
-                        price_series = engine_price
-                
-                # Calculate lump sum benchmark (buy all at start)
                 if "lump_sum" in benchmark_options and total_invested > 0:
                     try:
-                        # Get price data for lump sum calculation
                         if isinstance(price_series, pd.Series) and not price_series.empty:
                             start_price = price_series.iloc[0]
-                            # Calculate shares if invested all at start
                             shares_lump = total_invested / start_price
-                            # Calculate equity curve for lump sum
                             lump_sum_equity = price_series * shares_lump
-                            
-                            # Calculate lump sum metrics
-                            final_lump = lump_sum_equity.iloc[-1]
-                            lump_return = (final_lump - total_invested) / total_invested * 100
-                            
+
                             benchmark_results["lump_sum"] = {
+                                "label": "一次性买入",
                                 "equity": lump_sum_equity,
-                                "final_value": final_lump,
-                                "return_pct": lump_return,
+                                "metrics": DCABacktestEngine.compute_metrics_from_equity(
+                                    lump_sum_equity,
+                                    total_invested,
+                                ),
                             }
-                        else:
-                            st.caption("⚠️ 一次性买入基准缺少价格数据，已跳过")
                     except Exception as e:
                         st.caption(f"⚠️ 一次性买入基准计算失败: {str(e)}")
-                
-                # Calculate plain DCA benchmark (if using smart strategy)
+
                 if "plain_dca" in benchmark_options and strategy_type != "plain":
                     try:
                         plain_result = engine.run_smart_dca_backtest(
@@ -1131,412 +1081,77 @@ if run_backtest_btn:
                             max_total_investment=max_total_investment,
                         )
                         benchmark_results["plain_dca"] = {
+                            "label": "普通定投",
                             "equity": plain_result["equity_curve"],
-                            "final_value": plain_result["metrics"].get("final_value", 0),
-                            "return_pct": plain_result["metrics"].get("total_return_pct", 0),
+                            "metrics": plain_result.get("metrics", {}),
                         }
                     except Exception as e:
                         st.caption(f"⚠️ 普通定投基准计算失败: {str(e)}")
                 
-                # Display benchmark comparison table
-                if benchmark_results:
-                    current_return = result["metrics"].get("total_return_pct", 0)
-                    current_final = result["metrics"].get("final_value", 0)
-                    
-                    comparison_data = [{
-                        "策略": strategy_display.get(strategy_type, strategy_type),
-                        "期末资产": f"¥{current_final:,.0f}",
-                        "总收益率": f"{current_return:.2f}%",
-                        "相对收益": "-",
-                    }]
-                    
-                    if "lump_sum" in benchmark_results:
-                        br = benchmark_results["lump_sum"]
-                        alpha = current_return - br["return_pct"]
-                        comparison_data.append({
-                            "策略": "一次性买入",
-                            "期末资产": f"¥{br['final_value']:,.0f}",
-                            "总收益率": f"{br['return_pct']:.2f}%",
-                            "相对收益": f"{alpha:+.2f}%",
-                        })
-                    
-                    if "plain_dca" in benchmark_results:
-                        br = benchmark_results["plain_dca"]
-                        alpha = current_return - br["return_pct"]
-                        comparison_data.append({
-                            "策略": "普通定投",
-                            "期末资产": f"¥{br['final_value']:,.0f}",
-                            "总收益率": f"{br['return_pct']:.2f}%",
-                            "相对收益": f"{alpha:+.2f}%",
-                        })
-                    
-                    st.dataframe(pd.DataFrame(comparison_data), width='stretch', hide_index=True)
-                    
-                    # Store for chart
-                    st.session_state.benchmark_results = benchmark_results
+                benchmark_elapsed = time.time() - benchmark_start
+                log_text += f"✓ 基准对比计算完成（耗时 {benchmark_elapsed:.2f}s）\n"
+                with log_container:
+                    log_display.code(log_text, language="text")
+                
+                # Update timer after benchmark
+                interim_elapsed = time.time() - start_time
+                with timer_container:
+                    st.metric("⏱️ 当前耗时", f"{interim_elapsed:.1f}s")
 
-            # Key metrics
-            metrics = result["metrics"]
-            st.markdown("### 📊 核心指标")
-
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                st.metric(
-                    "总投资额",
-                    f"¥{metrics.get('total_invested', 0):,.0f}",
-                )
-            with col2:
-                st.metric(
-                    "期末资产",
-                    f"¥{metrics.get('final_value', 0):,.0f}",
-                )
-            with col3:
-                st.metric(
-                    "总收益率",
-                    f"{metrics.get('total_return_pct', 0):.2f}%",
-                )
-            with col4:
-                st.metric(
-                    "年化收益 (CAGR)",
-                    f"{metrics.get('cagr_pct', 0):.2f}%",
-                )
-            with col5:
-                st.metric(
-                    "Sharpe比率",
-                    f"{metrics.get('sharpe_ratio', 0):.2f}",
-                )
-
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric(
-                    "Sortino比率",
-                    f"{metrics.get('sortino_ratio', 0):.2f}",
-                )
-            with col2:
-                st.metric(
-                    "Calmar比率",
-                    f"{metrics.get('calmar_ratio', 0):.2f}",
-                )
-            with col3:
-                st.metric(
-                    "最大回撤",
-                    f"{metrics.get('max_drawdown_pct', 0):.2f}%",
-                )
-            with col4:
-                st.metric(
-                    "年化波动率",
-                    f"{metrics.get('volatility_pct', 0):.2f}%",
-                )
-
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric(
-                    "月度胜率",
-                    f"{metrics.get('win_rate_pct', 0):.2f}%",
-                )
-            with col2:
-                st.metric(
-                    "回测天数",
-                    f"{metrics.get('total_days', 0)} 天",
-                )
-
-            # Equity curve chart with investment markers
-            st.markdown("### 📈 净值曲线与投资节点")
-            equity_curve = result["equity_curve"]
-            transactions = result["transactions"]
-
-            fig_equity = go.Figure()
+            # Store result in session state to preserve state when checkbox changes
+            st.session_state.backtest_result = result
             
-            # Add equity curve
-            fig_equity.add_trace(
-                go.Scatter(
-                    x=equity_curve.index,
-                    y=equity_curve.values,
-                    mode="lines",
-                    name="组合净值",
-                    line=dict(color="royalblue", width=2),
-                    fill="tozeroy",
-                )
-            )
+            elapsed_time = time.time() - start_time
             
-            # Add buy markers
-            if not transactions.empty:
-                buy_txs = transactions[transactions["action"] == "BUY"]
-                if not buy_txs.empty:
-                    # Get equity values at buy dates
-                    buy_dates = pd.to_datetime(buy_txs["date"])
-                    buy_values = [equity_curve.loc[equity_curve.index >= d].iloc[0] if len(equity_curve.loc[equity_curve.index >= d]) > 0 else equity_curve.iloc[-1] for d in buy_dates]
-                    
-                    fig_equity.add_trace(
-                        go.Scatter(
-                            x=buy_dates,
-                            y=buy_values,
-                            mode="markers",
-                            name="买入点",
-                            marker=dict(color="green", size=8, symbol="triangle-up"),
-                            hovertemplate="<b>买入</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
-                        )
-                    )
-                
-                # Add sell markers if any
-                sell_txs = transactions[transactions["action"].str.contains("SELL", na=False)]
-                if not sell_txs.empty:
-                    sell_dates = pd.to_datetime(sell_txs["date"])
-                    sell_values = [equity_curve.loc[equity_curve.index >= d].iloc[0] if len(equity_curve.loc[equity_curve.index >= d]) > 0 else equity_curve.iloc[-1] for d in sell_dates]
-                    
-                    fig_equity.add_trace(
-                        go.Scatter(
-                            x=sell_dates,
-                            y=sell_values,
-                            mode="markers",
-                            name="止盈卖出",
-                            marker=dict(color="red", size=10, symbol="triangle-down"),
-                            hovertemplate="<b>卖出</b><br>日期: %{x}<br>资产: ¥%{y:,.0f}<extra></extra>",
-                        )
-                    )
+            log_text += f"\n✅ 全部完成！总耗时 {elapsed_time:.1f}s\n"
+            log_text += f"📊 正在生成结果...\n"
+            with log_container:
+                log_display.code(log_text, language="text")
             
-            # Add benchmark curves if available
-            if benchmark_results:
-                if "lump_sum" in benchmark_results:
-                    lump_equity = benchmark_results["lump_sum"]["equity"]
-                    fig_equity.add_trace(
-                        go.Scatter(
-                            x=lump_equity.index,
-                            y=lump_equity.values,
-                            mode="lines",
-                            name="一次性买入",
-                            line=dict(color="orange", width=1.5, dash="dash"),
-                        )
-                    )
-                
-                if "plain_dca" in benchmark_results:
-                    plain_equity = benchmark_results["plain_dca"]["equity"]
-                    fig_equity.add_trace(
-                        go.Scatter(
-                            x=plain_equity.index,
-                            y=plain_equity.values,
-                            mode="lines",
-                            name="普通定投",
-                            line=dict(color="green", width=1.5, dash="dot"),
-                        )
-                    )
+            # Display elapsed time with timer
+            with timer_container:
+                st.metric("⏱️ 总耗时", f"{elapsed_time:.1f}s")
             
-            fig_equity.update_layout(
-                title="定投组合净值曲线（含交易标记）",
-                xaxis_title="日期",
-                yaxis_title="资产价值 (元)",
-                hovermode="x unified",
-                height=450,
-                template="plotly_white",
-            )
-            st.plotly_chart(fig_equity, width='stretch')
+            # Clear progress indicators
+            progress_container.empty()
 
-            # Positions breakdown
-            st.markdown("### 💼 期末持仓")
-            final_position = result["final_position"]
-            if final_position:
-                position_df = pd.DataFrame([{
-                    "代码": final_position["code"],
-                    "持仓数": f"{final_position['shares']:,.2f}",
-                    "当前价格": f"¥{final_position['price']:.2f}",
-                    "持仓市值": f"¥{final_position.get('holdings_value', 0):,.2f}",
-                    "现金余额": f"¥{final_position.get('cash', 0):,.2f}",
-                    "总资产": f"¥{final_position.get('total_value', 0):,.2f}",
-                    "总收益": f"¥{final_position['gain']:,.2f}",
-                    "收益率": f"{final_position['gain_pct']:.2f}%",
-                }])
-                st.dataframe(position_df, width='stretch')
-
-            # Strategy metrics for smart strategies
-            if result.get("strategy_metrics") is not None and not result["strategy_metrics"].empty:
-                st.markdown("### 📊 策略指标追踪")
-                strategy_df = result["strategy_metrics"]
-                
-                metric_col = "pe" if strategy_type == "smart_pe" else "pb"
-                if metric_col in strategy_df.columns:
-                    fig_metric = go.Figure()
-                    fig_metric.add_trace(
-                        go.Scatter(
-                            x=strategy_df["date"],
-                            y=strategy_df[metric_col],
-                            mode="lines+markers",
-                            name=metric_col.upper(),
-                            line=dict(color="orange"),
-                        )
-                    )
-                    fig_metric.update_layout(
-                        title=f"投资时点的{metric_col.upper()}值变化",
-                        xaxis_title="日期",
-                        yaxis_title=metric_col.upper(),
-                        hovermode="x unified",
-                        height=350,
-                        template="plotly_white",
-                    )
-                    st.plotly_chart(fig_metric, width='stretch')
-
-            # Transaction history
-            st.markdown("### 📝 交易记录")
-            transactions = result["transactions"]
-            if not transactions.empty:
-                # Show summary stats
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    total_commission = transactions["commission"].sum()
-                    st.metric("累计佣金", f"¥{total_commission:,.2f}")
-                with col2:
-                    avg_price = transactions[transactions["action"] == "BUY"]["price"].mean()
-                    st.metric("平均买入价", f"¥{avg_price:.2f}")
-                with col3:
-                    last_price = transactions.iloc[-1]["price"]
-                    st.metric("最后交易价", f"¥{last_price:.2f}")
-                
-                # Show transaction table with more details
-                tx_display = transactions.copy()
-                tx_display["date"] = tx_display["date"].dt.strftime("%Y-%m-%d")
-                
-                # Add cumulative investment column
-                tx_display["cumulative_invested"] = tx_display[tx_display["action"] == "BUY"]["investment"].cumsum()
-                
-                display_columns = ["date", "action", "price", "execution_price", "shares", "investment", "commission"]
-                if "cumulative_invested" in tx_display.columns:
-                    display_columns.append("cumulative_invested")
-                
-                # Show last 30 transactions by default
-                show_all = st.checkbox("显示全部交易记录", value=False, key="show_all_transactions")
-                if show_all:
-                    st.dataframe(tx_display[display_columns], width='stretch')
-                else:
-                    st.dataframe(tx_display[display_columns].tail(30), width='stretch')
-                    st.caption(f"显示最近30条交易，共{len(transactions)}条")
-
-            # Download results
-            st.markdown("### 📥 导出结果")
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                equity_csv = equity_curve.reset_index()
-                equity_csv.columns = ["date", "value"]
-                st.download_button(
-                    label="下载净值曲线",
-                    data=equity_csv.to_csv(index=False),
-                    file_name=f"dca_equity_{code}_{start_date_str}_{end_date_str}.csv",
-                    mime="text/csv",
-                    key="download_equity_main",
-                )
-
-            with col2:
-                st.download_button(
-                    label="下载持仓信息",
-                    data=position_df.to_csv(index=False),
-                    file_name=f"dca_positions_{code}_{end_date_str}.csv",
-                    mime="text/csv",
-                    key="download_positions_main",
-                )
-
-            with col3:
-                if not transactions.empty:
-                    st.download_button(
-                        label="下载交易记录",
-                        data=transactions.to_csv(index=False),
-                        file_name=f"dca_transactions_{code}_{start_date_str}_{end_date_str}.csv",
-                        mime="text/csv",
-                        key="download_transactions_main",
-                    )
+            # Persist context for re-rendering without rerunning backtest
+            st.session_state.last_run_context = {
+                "code": code,
+                "start_date_str": start_date_str,
+                "end_date_str": end_date_str,
+                "strategy_type": strategy_type,
+                "rebalance_freq": rebalance_freq,
+                "freq_day": freq_day,
+                "monthly_investment": monthly_investment,
+                "commission_rate": commission_rate,
+                "min_commission": min_commission,
+                "slippage": slippage,
+                "initial_capital": initial_capital,
+                "risk_free_rate": risk_free_rate,
+                "enable_take_profit": enable_take_profit,
+                "trailing_params": trailing_params if enable_take_profit else None,
+                "enable_benchmark": enable_benchmark,
+                "benchmark_options": benchmark_options,
+                "benchmark_results": benchmark_results,
+                "max_total_investment": max_total_investment,
+                "elapsed_time": elapsed_time,
+                "price_mode": price_mode,
+                "render_id": f"run_{int(time.time())}",
+            }
 
         except Exception as e:
             st.error(f"❌ 回测失败：{str(e)}")
             st.info("💡 可能原因：\n- 数据源连接失败\n- ETF代码不存在\n- 时间范围内无数据\n- 估值数据不可用(智能定投需要)")
 
 # ================================================================
-# Display cached results if available
+# Render results (fresh run or cached) using shared renderer
 # ================================================================
-if st.session_state.backtest_result is not None and not run_backtest_btn:
-    st.divider()
-    st.markdown("### 📊 缓存的回测结果")
-    result = st.session_state.backtest_result
-    
-    # Transaction history for cached results
-    st.markdown("### 📝 交易记录")
-    transactions = result["transactions"]
-    if not transactions.empty:
-        # Show summary stats
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            total_commission = transactions["commission"].sum()
-            st.metric("累计佣金", f"¥{total_commission:,.2f}")
-        with col2:
-            avg_price = transactions[transactions["action"] == "BUY"]["price"].mean()
-            st.metric("平均买入价", f"¥{avg_price:.2f}")
-        with col3:
-            last_price = transactions.iloc[-1]["price"]
-            st.metric("最后交易价", f"¥{last_price:.2f}")
-        
-        # Show transaction table with more details
-        tx_display = transactions.copy()
-        tx_display["date"] = tx_display["date"].dt.strftime("%Y-%m-%d")
-        
-        # Add cumulative investment column
-        tx_display["cumulative_invested"] = tx_display[tx_display["action"] == "BUY"]["investment"].cumsum()
-        
-        display_columns = ["date", "action", "price", "execution_price", "shares", "investment", "commission"]
-        if "cumulative_invested" in tx_display.columns:
-            display_columns.append("cumulative_invested")
-        
-        # Show last 30 transactions by default
-        show_all = st.checkbox("显示全部交易记录", value=False, key="show_all_transactions")
-        if show_all:
-            st.dataframe(tx_display[display_columns], width='stretch')
-        else:
-            st.dataframe(tx_display[display_columns].tail(30), width='stretch')
-            st.caption(f"显示最近30条交易，共{len(transactions)}条")
-    
-    # Download results for cached data
-    st.markdown("### 📥 导出结果")
-    col1, col2, col3 = st.columns(3)
-    
-    equity_curve = result["equity_curve"]
-    final_position = result.get("final_position", {})
-    
-    with col1:
-        equity_csv = equity_curve.reset_index()
-        equity_csv.columns = ["date", "value"]
-        st.download_button(
-            label="下载净值曲线",
-            data=equity_csv.to_csv(index=False),
-            file_name="dca_equity_cached.csv",
-            mime="text/csv",
-            key="download_equity_cached",
-        )
-    
-    with col2:
-        if final_position:
-            position_df = pd.DataFrame([{
-                "代码": final_position.get("code", ""),
-                "持仓数": final_position.get('shares', 0),
-                "当前价格": final_position.get('price', 0),
-                "持仓市值": final_position.get('holdings_value', 0),
-                "现金余额": final_position.get('cash', 0),
-                "总资产": final_position.get('total_value', 0),
-                "总收益": final_position.get('gain', 0),
-                "收益率": final_position.get('gain_pct', 0),
-            }])
-            st.download_button(
-                label="下载持仓信息",
-                data=position_df.to_csv(index=False),
-                file_name="dca_positions_cached.csv",
-                mime="text/csv",
-                key="download_positions_cached",
-            )
-    
-    with col3:
-        if not transactions.empty:
-            st.download_button(
-                label="下载交易记录",
-                data=transactions.to_csv(index=False),
-                file_name="dca_transactions_cached.csv",
-                mime="text/csv",
-                key="download_transactions_cached",
-            )
+if st.session_state.backtest_result is not None and st.session_state.last_run_context is not None:
+    render_backtest_results(
+        st.session_state.backtest_result,
+        st.session_state.last_run_context,
+    )
 
 # ============================================================================
 # Footer & Help
