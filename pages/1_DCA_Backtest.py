@@ -20,6 +20,8 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from app.dca_backtest_engine import DCABacktestEngine
+from app.agents.analyst import analyst_agent
+from app.state import AgentState
 
 
 def render_backtest_results(result, context):
@@ -1152,6 +1154,77 @@ if st.session_state.backtest_result is not None and st.session_state.last_run_co
         st.session_state.backtest_result,
         st.session_state.last_run_context,
     )
+
+    # Analyst agent powered by LLM
+    result_for_insight = st.session_state.backtest_result
+    metrics_for_insight = result_for_insight.get("metrics", {}) if isinstance(result_for_insight, dict) else {}
+    transactions_df = result_for_insight.get("transactions") if isinstance(result_for_insight, dict) else None
+    equity_curve = result_for_insight.get("equity_curve") if isinstance(result_for_insight, dict) else None
+
+    portfolio_data = {}
+    trades_json = "[]"
+    if equity_curve is not None and len(equity_curve) > 1:
+        drawdown_series = equity_curve / equity_curve.cummax() - 1
+        portfolio_data = {
+            "value": equity_curve.to_json(date_format="iso", orient="split"),
+            "drawdown": drawdown_series.to_json(date_format="iso", orient="split"),
+        }
+
+    if transactions_df is not None and not transactions_df.empty:
+        trades_json = transactions_df.to_json(orient="records", date_format="iso")
+
+    benchmark_metrics = {}
+    benchmark_results_ctx = st.session_state.last_run_context.get("benchmark_results") if st.session_state.last_run_context else {}
+    if isinstance(benchmark_results_ctx, dict):
+        # Use the first available benchmark metrics if present
+        for _, br in benchmark_results_ctx.items():
+            bm = br.get("metrics") if isinstance(br, dict) else None
+            if bm:
+                benchmark_metrics = bm
+                break
+
+    agent_state: AgentState = {
+        "messages": [],
+        "tickers": [st.session_state.last_run_context.get("code")],
+        "benchmark_ticker": None,
+        "start_date": st.session_state.last_run_context.get("start_date_str"),
+        "end_date": st.session_state.last_run_context.get("end_date_str"),
+        "market_data": {},
+        "benchmark_data": {},
+        "strategy_code": st.session_state.last_run_context.get("strategy_type"),
+        "user_edited_code": None,
+        "code_confirmed": True,
+        "optimization_mode": False,
+        "optimization_params": None,
+        "optimization_results": None,
+        "execution_output": "",
+        "performance_metrics": metrics_for_insight,
+        "portfolio_data": portfolio_data,
+        "trades_data": trades_json,
+        "figure_json": None,
+        "benchmark_metrics": benchmark_metrics,
+        "analyst_figures": None,
+        "analyst_data": None,
+        "analysis_completed": None,
+        "analysis_runs": 0,
+        "valuation": None,
+        "data_failed": None,
+        "need_full_history": None,
+        "needs_benchmark": None,
+        "llm_provider": None,
+        "llm_model": None,
+        "force_agent": None,
+        "next_step": None,
+        "sender": None,
+        "feedback": None,
+        "retry_count": None,
+        "reasoning": None,
+    }
+
+    try:
+        analyst_agent(agent_state)
+    except Exception as e:
+        st.warning(f"⚠️ Analyst Agent 运行失败：{e}")
 
 # ============================================================================
 # Footer & Help

@@ -743,7 +743,7 @@ class DCABacktestEngine:
             "total_value": final_total_value,
             "cost_basis": cost_basis,
             "initial_capital": initial_capital,
-            "total_invested": total_capital_deployed,
+            "total_invested": investment_baseline,
             "gain": gain,
             "gain_pct": gain_pct,
         }

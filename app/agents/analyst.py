@@ -7,6 +7,7 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import streamlit as st
 import io
+import json
 from app.llm import get_llm
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
@@ -58,20 +59,24 @@ def analyst_agent(state: AgentState):
         try:
             st.write("📊 **Analyst Agent:** Generating professional equity charts...")
             
-            # Deserialize
-            val_df = pd.read_json(io.StringIO(portfolio_data["value"]), orient='split')
-            dd_df = pd.read_json(io.StringIO(portfolio_data["drawdown"]), orient='split')
-            
-            # Handle potential DataFrame vs Series
-            if isinstance(val_df, pd.DataFrame):
-                val_series = val_df.iloc[:, 0]
-            else:
-                val_series = val_df
-                
-            if isinstance(dd_df, pd.DataFrame):
-                dd_series = dd_df.iloc[:, 0]
-            else:
-                dd_series = dd_df
+            def _load_series(raw_json: str) -> pd.Series:
+                try:
+                    obj = json.loads(raw_json)
+                    if isinstance(obj, dict) and "data" in obj and "index" in obj:
+                        return pd.Series(obj["data"], index=pd.to_datetime(obj["index"]))
+                except Exception:
+                    pass
+                try:
+                    return pd.read_json(io.StringIO(raw_json), orient="split", typ="series")
+                except Exception:
+                    # Fallback: try DataFrame then first column
+                    df = pd.read_json(io.StringIO(raw_json), orient="split")
+                    if isinstance(df, pd.DataFrame):
+                        return df.iloc[:, 0]
+                    return pd.Series(dtype=float)
+
+            val_series = _load_series(portfolio_data["value"])
+            dd_series = _load_series(portfolio_data["drawdown"])
 
             # Create Subplots: Equity (Top) and Drawdown (Bottom)
             fig_equity = make_subplots(rows=2, cols=1, shared_xaxes=True, 
