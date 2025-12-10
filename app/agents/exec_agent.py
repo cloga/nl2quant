@@ -140,7 +140,7 @@ def exec_agent(state: AgentState):
         benchmark_data = state.get("benchmark_data", {})
 
         # Display the exact code that will be executed for transparency/debugging
-        with st.expander("💻 Strategy Code (to execute)", expanded=False):
+        with st.popover("💻 Strategy Code (to execute)"):
             st.code(code, language="python")
         
         # Set default frequency for vectorbt to avoid "Index frequency is None" error

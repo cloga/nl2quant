@@ -734,7 +734,7 @@ if run_btn:
         }[rank_metric], ascending=ascending)
 
         # Display formatted
-        display_df = comparison_df.copy()
+        display_df = comparison_df.reset_index(drop=True)
         display_df["总投资额 (¥)"] = display_df["总投资额 (¥)"].map(lambda x: f"{x:,.0f}")
         display_df["期末资产 (¥)"] = display_df["期末资产 (¥)"].map(lambda x: f"{x:,.0f}")
         for col in ["总收益率", "CAGR", "年化波动", "最大回撤"]:
@@ -742,7 +742,8 @@ if run_btn:
         for col in ["Sharpe", "Sortino", "Calmar"]:
             display_df[col] = display_df[col].map(lambda x: "-" if x is None or pd.isna(x) else f"{x:.2f}")
 
-        st.dataframe(display_df, width='stretch')
+        # Cast to string to avoid Arrow type issues when columns mix numbers/strings
+        st.dataframe(display_df.fillna("-").astype(str))
 
         # ================================================================
         # 净值曲线对比
@@ -773,7 +774,7 @@ if run_btn:
             height=450,
             template="plotly_white",
         )
-        st.plotly_chart(fig_equity, width='stretch')
+        st.plotly_chart(fig_equity, use_container_width=True)
 
         # ================================================================
         # 关键指标对比柱状图
@@ -797,7 +798,7 @@ if run_btn:
                 showlegend=False,
                 height=350,
             )
-            st.plotly_chart(fig_cagr, width='stretch')
+            st.plotly_chart(fig_cagr, use_container_width=True)
         
         with col2:
             # Sharpe对比
@@ -814,7 +815,7 @@ if run_btn:
                 showlegend=False,
                 height=350,
             )
-            st.plotly_chart(fig_sharpe, width='stretch')
+            st.plotly_chart(fig_sharpe, use_container_width=True)
 
         col1, col2 = st.columns(2)
         
@@ -833,7 +834,7 @@ if run_btn:
                 showlegend=False,
                 height=350,
             )
-            st.plotly_chart(fig_dd, width='stretch')
+            st.plotly_chart(fig_dd, use_container_width=True)
         
         with col2:
             # 波动率对比
@@ -850,7 +851,7 @@ if run_btn:
                 showlegend=False,
                 height=350,
             )
-            st.plotly_chart(fig_vol, width='stretch')
+            st.plotly_chart(fig_vol, use_container_width=True)
 
         # ================================================================
         # 详细统计表

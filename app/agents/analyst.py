@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 import io
 import json
-from app.llm import get_llm
+from app.llm import get_llm, invoke_llm_with_retry
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
 
@@ -387,26 +387,40 @@ Market Data Info: {data_info}
     
     with st.expander("🧐 Analyst Agent", expanded=True):
         timer = render_live_timer("⏳ Generating analysis summary...")
-        response = chain.invoke(input_vars)
+        try:
+            response = invoke_llm_with_retry(chain, input_vars, max_retries=5, initial_delay=2.0)
+        except Exception as e:
+            timer.empty()
+            st.error(f"❌ Failed to generate analysis after retries: {str(e)}")
+            st.info("当前分析未能成功生成。请检查LLM服务状态或稍后重试。")
+            raise
         timer.empty()
-        
+
+        # Show fallback/model info if available
+        model_info = getattr(response, '_llm_provider', None)
+        fallback_error = getattr(response, '_llm_fallback_error', None)
+        if fallback_error:
+            st.warning(f"⚠️ GitHub模型API报错/限流，已自动切换到DeepSeek。原始错误信息：{fallback_error}")
+        if model_info:
+            st.info(f"当前使用的Agent模型: {model_info}")
+
         display_token_usage(response)
-        
-        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+
+        with st.popover("🧠 View Raw Prompt & Response"):
             st.markdown("**📝 Prompt:**")
             st.code(formatted_prompt, language="markdown")
             st.markdown("**💬 Response:**")
             st.code(response.content, language="markdown")
-        
+
         st.markdown("#### 📝 Summary")
         st.markdown(response.content)
-        
+
         if analyst_figures:
             st.markdown("#### 📊 Charts")
             unique_id = str(uuid.uuid4())[:8]
             for i, fig in enumerate(analyst_figures):
                 st.plotly_chart(fig, use_container_width=True, key=f"analyst_chart_{unique_id}_{i}")
-                
+
         if analyst_data:
             st.markdown("#### 📋 Data")
             for title, df in analyst_data.items():

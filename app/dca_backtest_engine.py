@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
 import tushare as ts
 from app.config import Config
+from itertools import product
 
 
 class DCABacktestEngine:
@@ -524,6 +525,8 @@ class DCABacktestEngine:
         stop_out_price = None
         highest_value = 0
         take_profit_activated = False
+        peak_holdings_value = 0  # Track peak for holdings-only drawdown
+        peak_holdings_cost = 0   # Track cost at peak for holdings-only drawdown
 
         # Generate investment dates based on frequency
         investment_dates = self._generate_investment_dates(
@@ -662,6 +665,10 @@ class DCABacktestEngine:
                         # Reset baseline: treat realized cash as the new round capital ceiling
                         cost_basis = 0.0
                         initial_capital = cash
+                        
+                        # Reset peak tracking for next round
+                        peak_holdings_value = 0
+                        peak_holdings_cost = 0
                 
                 elif trailing_params.get("mode") == "trailing":
                     activation_return = trailing_params.get("activation_return", 0.3)
@@ -671,7 +678,19 @@ class DCABacktestEngine:
                         take_profit_activated = True
                     
                     if take_profit_activated:
-                        drawdown_from_peak = (highest_value - portfolio_val) / highest_value
+                        # Calculate drawdown based on the same method as return calculation
+                        if return_calc_method == "holdings_only":
+                            # For holdings-only mode, track peak holdings return
+                            if holdings_value > peak_holdings_value:
+                                peak_holdings_value = holdings_value
+                                peak_holdings_cost = holdings_cost
+                            
+                            peak_return = (peak_holdings_value - peak_holdings_cost) / peak_holdings_cost if peak_holdings_cost > 0 else 0
+                            drawdown_from_peak = (peak_return - current_return) / (1 + peak_return) if peak_return > 0 else 0
+                        else:
+                            # For total portfolio mode, use original portfolio value drawdown
+                            drawdown_from_peak = (highest_value - portfolio_val) / highest_value
+                        
                         if drawdown_from_peak >= drawdown_threshold:
                             # Sell all
                             sell_value = holdings * current_price
@@ -694,6 +713,10 @@ class DCABacktestEngine:
                             # Reset baseline: realized cash becomes the new round capital ceiling
                             cost_basis = 0.0
                             initial_capital = cash
+                            
+                            # Reset peak tracking for next round
+                            peak_holdings_value = 0
+                            peak_holdings_cost = 0
             
             # Check re-entry conditions
             if is_stopped_out and trailing_params:
@@ -760,6 +783,127 @@ class DCABacktestEngine:
             "cash_balance": cash,
             "diagnostics": diagnostics,
             "price_series": price_series,  # Add price data for benchmark comparison
+        }
+
+    def optimize_trailing_grid(
+        self,
+        code: str,
+        monthly_investment: float,
+        start_date: str,
+        end_date: str,
+        strategy_type: str = "plain",
+        smart_params: Optional[Dict] = None,
+        rebalance_freq: str = "M",
+        commission_rate: float = 0.0001,
+        min_commission: float = 5.0,
+        slippage: float = 0.001,
+        initial_capital: float = 0.0,
+        risk_free_rate: float = 0.025,
+        freq_day: Optional[any] = None,
+        max_total_investment: float = 0.0,
+        activation_range: Optional[List[float]] = None,
+        drawdown_range: Optional[List[float]] = None,
+        reentry_mode: str = "time",
+        reentry_days: int = 30,
+        reentry_drop: float = 0.15,
+        max_tests: int = 400,
+    ) -> Dict:
+        """
+        Sweep activation/drawdown thresholds for trailing take-profit and pick the best Sharpe.
+
+        Auto-generates reasonable grids when ranges are not provided.
+        """
+        if activation_range is None:
+            activation_range = [round(x, 2) for x in np.linspace(0.1, 0.6, 6)]
+        if drawdown_range is None:
+            drawdown_range = [round(x, 3) for x in np.linspace(0.03, 0.2, 6)]
+
+        results = []
+        skipped = 0
+        combos = [(a, d) for a, d in product(activation_range, drawdown_range)]
+        if len(combos) > max_tests:
+            combos = combos[:max_tests]
+
+        for activation_return, drawdown_threshold in combos:
+            if drawdown_threshold <= 0 or activation_return <= 0 or drawdown_threshold >= 1.0:
+                skipped += 1
+                continue
+            if drawdown_threshold >= activation_return:
+                skipped += 1
+                continue
+
+            trailing_params = {
+                "mode": "trailing",
+                "activation_return": activation_return,
+                "drawdown_threshold": drawdown_threshold,
+                "reentry_mode": reentry_mode,
+            }
+            if reentry_mode == "time":
+                trailing_params["reentry_days"] = reentry_days
+            elif reentry_mode == "price":
+                trailing_params["reentry_drop"] = reentry_drop
+
+            try:
+                result = self.run_smart_dca_backtest(
+                    code=code,
+                    monthly_investment=monthly_investment,
+                    start_date=start_date,
+                    end_date=end_date,
+                    strategy_type=strategy_type,
+                    smart_params=smart_params,
+                    rebalance_freq=rebalance_freq,
+                    commission_rate=commission_rate,
+                    min_commission=min_commission,
+                    slippage=slippage,
+                    initial_capital=initial_capital,
+                    risk_free_rate=risk_free_rate,
+                    trailing_params=trailing_params,
+                    freq_day=freq_day,
+                    max_total_investment=max_total_investment,
+                )
+                metrics = result.get("metrics", {}) or {}
+                sharpe = metrics.get("sharpe_ratio", -np.inf)
+                results.append({
+                    "activation_return": activation_return,
+                    "drawdown_threshold": drawdown_threshold,
+                    "reentry_mode": reentry_mode,
+                    "reentry_days": reentry_days if reentry_mode == "time" else None,
+                    "reentry_drop": reentry_drop if reentry_mode == "price" else None,
+                    "metrics": metrics,
+                    "sharpe_ratio": sharpe,
+                    "result": result,
+                })
+            except Exception:
+                skipped += 1
+                continue
+
+        if not results:
+            raise RuntimeError("No successful trailing grid results. Check data availability or parameter ranges.")
+
+        results_sorted = sorted(
+            results,
+            key=lambda r: (
+                r.get("sharpe_ratio", -np.inf),
+                r.get("metrics", {}).get("total_return_pct", -np.inf),
+            ),
+            reverse=True,
+        )
+
+        best = results_sorted[0]
+        best_result = best["result"]
+
+        return {
+            "best_params": {
+                "activation_return": best["activation_return"],
+                "drawdown_threshold": best["drawdown_threshold"],
+                "reentry_mode": best["reentry_mode"],
+                "reentry_days": best.get("reentry_days"),
+                "reentry_drop": best.get("reentry_drop"),
+            },
+            "best_metrics": best_result.get("metrics", {}),
+            "best_result": best_result,
+            "all_results": results_sorted,
+            "skipped": skipped,
         }
 
     @staticmethod

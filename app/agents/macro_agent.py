@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage
-from app.llm import get_llm
+from app.llm import get_llm, invoke_llm_with_retry
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
 
@@ -43,10 +43,15 @@ Do NOT claim to have live data; keep statements generic unless user provided spe
     chain = prompt | llm
     with st.expander("🌐 Macro Agent", expanded=True):
         timer = render_live_timer("⏳ Analyzing macro context...")
-        response = chain.invoke({"query": user_input})
+        try:
+            response = invoke_llm_with_retry(chain, {"query": user_input}, max_retries=5, initial_delay=2.0)
+        except Exception as e:
+            timer.empty()
+            st.error(f"❌ Macro Agent failed after retries: {str(e)}")
+            raise
         timer.empty()
         display_token_usage(response)
-        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+        with st.popover("🧠 View Raw Prompt & Response"):
             formatted = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in prompt.format_messages(query=user_input)])
             st.markdown("**📝 Prompt:**")
             st.code(formatted, language="markdown")
