@@ -50,12 +50,15 @@ class PairsScreener:
         prices = {}
         failed_codes = []
         
-        for code in codes:
+        total = len(codes)
+        for idx, code in enumerate(codes, 1):
             try:
                 # 先检查缓存
+                print(f"[进度] [{idx}/{total}] 正在处理 {code}...", end=" ", flush=True)
                 cached_data = self.cache.get(code, self.start_date, self.end_date)
                 if cached_data is not None:
                     prices[code] = cached_data
+                    print("(缓存)")
                     continue
 
                 series = self.engine.fetch_etf_close(code, self.start_date, self.end_date)
@@ -63,10 +66,12 @@ class PairsScreener:
                     prices[code] = series
                     # 保存到缓存
                     self.cache.set(code, self.start_date, self.end_date, series)
+                    print(f"[OK] {len(series)}行")
                 else:
+                    print("(数据不足)")
                     failed_codes.append(code)
             except Exception as e:
-                print(f"[WARN] 获取 {code} 失败: {e}")
+                print(f"[WARN] 失败: {e}")
                 failed_codes.append(code)
         
         if not prices:
@@ -75,7 +80,7 @@ class PairsScreener:
         df = pd.DataFrame(prices)
         df = df.dropna()
         
-        print(f"[OK] 成功获取 {len(prices)} 只股票数据，{len(failed_codes)} 只失败")
+        print(f"\n[OK] 成功获取 {len(prices)}/{total} 只股票数据，{len(failed_codes)} 只失败")
         print(f"[OK] 有效数据行数: {len(df)}")
         
         return df

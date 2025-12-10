@@ -12,7 +12,8 @@ from pathlib import Path
 import sys
 import tushare as ts
 
-ROOT = Path(__file__).resolve().parent
+# 添加项目根目录到路径，以便导入app模块
+ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
