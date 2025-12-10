@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
 from app.dca_backtest_engine import DCABacktestEngine
 from app.agents.analyst import analyst_agent
 from app.state import AgentState
+from app.vectorbt_runner import run_vectorbt_dca_backtest
 
 
 def render_backtest_results(result, context):
@@ -602,6 +603,17 @@ strategy_type = st.sidebar.selectbox(
     help="普通定投每次固定金额；智能变额根据估值动态调整",
 )
 
+# Engine selection for cross-validation
+engine_choice = st.sidebar.selectbox(
+    "回测引擎",
+    ["builtin", "vectorbt_plain"],
+    format_func=lambda x: {
+        "builtin": "内置引擎 (全功能)",
+        "vectorbt_plain": "vectorbt (仅plain, 无止盈/智能)",
+    }[x],
+    help="可选用 vectorbt 进行对照回测，目前仅支持普通定投且不含止盈/智能估值。",
+)
+
 # Investment parameters
 st.sidebar.markdown("### 投资参数")
 
@@ -991,6 +1003,26 @@ if run_backtest_btn:
             from concurrent.futures import ThreadPoolExecutor
 
             def _run_backtest():
+                # vectorbt cross-validation only supports plain without take-profit/智能
+                if engine_choice == "vectorbt_plain":
+                    if strategy_type != "plain":
+                        raise ValueError("vectorbt 模式仅支持普通定投，请切换回 builtin 或选择 plain")
+                    if enable_take_profit:
+                        raise ValueError("vectorbt 模式暂不支持止盈/再入场，请关闭止盈或切换 builtin")
+                    return run_vectorbt_dca_backtest(
+                        code=code,
+                        monthly_investment=monthly_investment,
+                        start_date=start_date_str,
+                        end_date=end_date_str,
+                        rebalance_freq=rebalance_freq,
+                        freq_day=freq_day,
+                        commission_rate=commission_rate,
+                        min_commission=min_commission,
+                        slippage=slippage,
+                        initial_capital=initial_capital,
+                        max_total_investment=max_total_investment,
+                    )
+
                 return engine.run_smart_dca_backtest(
                     code=code,
                     monthly_investment=monthly_investment,
