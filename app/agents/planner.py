@@ -6,6 +6,7 @@ import streamlit as st
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
 from app.config import Config
+from app.llm import invoke_llm_with_retry
 
 # Simple in-memory cache for planner decisions to speed up repeated states
 _planner_cache = {}
@@ -36,6 +37,8 @@ def planner_agent(state: AgentState):
             base_url=planner_base,
             temperature=temperature,
             max_tokens=max_tokens,
+            max_retries=5,
+            request_timeout=60,
         )
 
     # Manual override: allow upstream to force a specific agent
@@ -213,6 +216,8 @@ Clarification: <中文澄清提问，给出 2-3 个示例，覆盖行情/回测/
             base_url=planner_base,
             temperature=0,
             max_tokens=10,
+            max_retries=5,
+            request_timeout=60,
         )
         try:
             resp = (flag_prompt | clf_llm).invoke({"text": text[:400]})
@@ -659,12 +664,17 @@ Reply with the label only.
     
     with st.expander("🧭 Planner Agent", expanded=True):
         timer = render_live_timer("⏳ Planner is thinking...")
-        response = chain.invoke(input_vars)
+        try:
+            response = invoke_llm_with_retry(chain, input_vars, max_retries=5, initial_delay=2.0)
+        except Exception as e:
+            timer.empty()
+            st.error(f"❌ Planner failed after retries: {str(e)}")
+            raise
         timer.empty() # Clear timer when done
         
         display_token_usage(response)
         
-        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+        with st.popover("🧠 View Raw Prompt & Response"):
             st.markdown("**📝 Prompt:**")
             st.code(formatted_prompt, language="markdown")
             st.markdown("**💬 Response:**")

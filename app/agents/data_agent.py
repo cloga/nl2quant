@@ -8,6 +8,7 @@ from app.config import Config
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
 from langchain_core.messages import AIMessage
+from app.llm import invoke_llm_with_retry
 
 def data_agent(state: AgentState):
     """
@@ -70,6 +71,8 @@ def data_agent(state: AgentState):
             api_key=ds_settings.get("api_key"),
             base_url=ds_settings.get("base_url"),
             temperature=0,
+            max_retries=5,
+            request_timeout=60,
         )
         current_date_str = default_end_date
 
@@ -128,7 +131,7 @@ def data_agent(state: AgentState):
         with st.expander("🗂️ Data Agent", expanded=True):
             timer = render_live_timer("⏳ Extracting ticker...")
             try:
-                raw_response = chain.invoke(input_vars)
+                raw_response = invoke_llm_with_retry(chain, input_vars, max_retries=5, initial_delay=2.0)
             except Exception as e:
                 timer.empty()
                 msg = f"提取代码失败：{e}. 请检查是否提供了正确的公司名或股票代码。"
@@ -141,7 +144,7 @@ def data_agent(state: AgentState):
             
             display_token_usage(raw_response)
             
-            with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+            with st.popover("🧠 View Raw Prompt & Response"):
                 st.markdown("**📝 Prompt:**")
                 st.code(formatted_prompt, language="markdown")
                 st.markdown("**💬 Response:**")

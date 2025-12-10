@@ -221,7 +221,7 @@ def render_backtest_results(result, context):
             row[name] = _format_value(values.get(key), kind)
         comparison_rows.append(row)
 
-    st.dataframe(pd.DataFrame(comparison_rows), width='stretch', hide_index=True)
+    st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True, hide_index=True)
 
     with st.expander("ℹ️ 核心指标含义", expanded=False):
         st.markdown(
@@ -334,7 +334,7 @@ def render_backtest_results(result, context):
         template="plotly_white",
     )
     fig_equity.update_xaxes(hoverformat="%Y-%m-%d")
-    st.plotly_chart(fig_equity, width='stretch')
+    st.plotly_chart(fig_equity, use_container_width=True)
 
     st.markdown("### 💼 期末持仓")
     final_position = result["final_position"]
@@ -349,7 +349,7 @@ def render_backtest_results(result, context):
             "总收益": f"¥{final_position['gain']:,.2f}",
             "收益率": f"{final_position['gain_pct']:.2f}%",
         }])
-        st.dataframe(position_df, width='stretch')
+        st.dataframe(position_df, use_container_width=True)
     else:
         position_df = pd.DataFrame()
 
@@ -377,7 +377,7 @@ def render_backtest_results(result, context):
                 height=350,
                 template="plotly_white",
             )
-            st.plotly_chart(fig_metric, width='stretch')
+            st.plotly_chart(fig_metric, use_container_width=True)
 
     st.markdown("### 📝 交易记录")
     if not transactions.empty:
@@ -402,9 +402,9 @@ def render_backtest_results(result, context):
 
         show_all = st.checkbox("显示全部交易记录", value=False, key=f"show_all_transactions_{context.get('render_id', 'current')}")
         if show_all:
-            st.dataframe(tx_display[display_columns], width='stretch')
+            st.dataframe(tx_display[display_columns], use_container_width=True)
         else:
-            st.dataframe(tx_display[display_columns].tail(30), width='stretch')
+            st.dataframe(tx_display[display_columns].tail(30), use_container_width=True)
             st.caption(f"显示最近30条交易，共{len(transactions)}条")
     else:
         st.warning("暂无交易记录")
@@ -754,7 +754,7 @@ with st.sidebar.expander("🛡️ 止盈与风控", expanded=False):
     if enable_take_profit:
         take_profit_mode = st.selectbox(
             "止盈模式",
-            ["target", "trailing"],
+            ["trailing", "target"],
             format_func=lambda x: {"target": "目标收益止盈", "trailing": "移动回撤止盈"}[x],
             help="目标收益：达到固定收益率清仓；移动回撤：从高点回撤一定幅度清仓",
         )
@@ -784,26 +784,37 @@ with st.sidebar.expander("🛡️ 止盈与风控", expanded=False):
             }
         
         elif take_profit_mode == "trailing":
-            activation_return = st.slider(
+            # Add option for return calculation method
+            return_calc_method = st.radio(
+                "收益计算方式",
+                ["holdings_only", "total_portfolio"],
+                format_func=lambda x: {"holdings_only": "持仓收益百分比", "total_portfolio": "总仓位收益百分比"}[x],
+                index=0,  # Default to holdings_only
+                help="持仓收益：仅计算持仓部分的收益率；总仓位收益：包含现金在内的总资产收益率",
+            )
+            
+            activation_return = st.number_input(
                 "激活线 - 收益率达到多少开始监控 (%)",
-                min_value=10.0,
-                max_value=100.0,
-                value=30.0,
+                min_value=0.0,
+                max_value=1000.0,
+                value=60.0,
                 step=5.0,
+                help="收益率达到此值后开始监控回撤",
             ) / 100
             
             drawdown_threshold = st.slider(
                 "回撤线 - 从最高点回吐多少触发清仓 (%)",
-                min_value=5.0,
-                max_value=30.0,
+                min_value=1.0,
+                max_value=50.0,
                 value=8.0,
-                step=1.0,
+                step=0.5,
             ) / 100
             
             trailing_params = {
                 "mode": "trailing",
                 "activation_return": activation_return,
-                "drawdown_threshold": drawdown_threshold
+                "drawdown_threshold": drawdown_threshold,
+                "return_calc_method": return_calc_method,
             }
         
         # Re-entry logic

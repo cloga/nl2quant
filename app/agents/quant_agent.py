@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage
 import streamlit as st
-from app.llm import get_llm
+from app.llm import get_llm, invoke_llm_with_retry
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
 
@@ -143,12 +143,17 @@ def quant_agent(state: AgentState):
     
     with st.expander("📈 Quant Agent", expanded=True):
         timer = render_live_timer("⏳ Generating strategy code...")
-        response = chain.invoke(input_vars)
+        try:
+            response = invoke_llm_with_retry(chain, input_vars, max_retries=5, initial_delay=2.0)
+        except Exception as e:
+            timer.empty()
+            st.error(f"❌ Quant Agent failed after retries: {str(e)}")
+            raise
         timer.empty()
         
         display_token_usage(response)
         
-        with st.expander("🧠 View Raw Prompt & Response", expanded=False):
+        with st.popover("🧠 View Raw Prompt & Response"):
             st.markdown("**📝 Prompt:**")
             st.code(formatted_prompt, language="markdown")
             st.markdown("**💬 Response:**")
