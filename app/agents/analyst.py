@@ -25,6 +25,7 @@ def analyst_agent(state: AgentState):
     metrics = state.get("performance_metrics", {})
     logs = state.get("execution_output", "")
     market_data = state.get("market_data", {})
+    fundamentals = state.get("fundamentals", {}) or {}
     portfolio_data = state.get("portfolio_data", {})
     trades_data = state.get("trades_data", "[]")
     benchmark_data = state.get("benchmark_data", {})
@@ -32,6 +33,10 @@ def analyst_agent(state: AgentState):
     optimization_results = state.get("optimization_results", {})
     optimization_mode = state.get("optimization_mode", False)
     analysis_runs = state.get("analysis_runs", 0) or 0
+
+    # Correlation mode detection: presence of correlation-oriented metrics and absence of portfolio/trades
+    corr_keys = {"pearson", "spearman", "beta", "rolling_vol", "tail_left", "tail_right"}
+    correlation_mode = bool(metrics) and corr_keys.issubset(set(metrics.keys()))
     
     # --- Visualization Logic ---
     analyst_figures = []
@@ -200,6 +205,15 @@ def analyst_agent(state: AgentState):
                 analyst_figures.append(fig_corr)
                 analyst_data["Correlation Matrix"] = corr
 
+            # 4.5 Correlation-specific normalized price plot when exactly two tickers
+            if correlation_mode and len(close_prices) == 2:
+                tickers = list(close_prices.keys())
+                norm_df = combined_df.copy()
+                norm_df = norm_df / norm_df.iloc[0]
+                fig_norm = px.line(norm_df, title="标准化价格走势 (用于直观观察联动)")
+                fig_norm.update_layout(yaxis_title="归一化价格", xaxis_title="日期")
+                analyst_figures.append(fig_norm)
+
     # --- LLM Summary Logic ---
     # Determine which prompt to use based on mode
     if optimization_mode and optimization_results:
@@ -322,6 +336,7 @@ Market Data Info: {data_info}
     
     # Create a summary of data if available
     data_info = "No data available"
+    fundamentals_info = ""
     if market_data:
         info = []
         for ticker, df in market_data.items():
@@ -348,18 +363,98 @@ Market Data Info: {data_info}
                     """)
         data_info = "\n".join(info)
 
-    chain = prompt | llm
-    
+    if fundamentals:
+        f_lines = []
+        for code, f in fundamentals.items():
+            name = f.get("name") or "-"
+            industry = f.get("industry") or f.get("category") or "-"
+            pe = f.get("pe")
+            pb = f.get("pb")
+            rev = f.get("revenue")
+            rev_period = f.get("revenue_period") or "-"
+            total_mv = f.get("total_mv")
+            roe = f.get("roe")
+            roa = f.get("roa")
+            np_yoy = f.get("netprofit_yoy")
+            f_lines.append(
+                f"{code} | {name} | 行业/类别: {industry} | PE: {pe if pe is not None else '-'} | PB: {pb if pb is not None else '-'} | 总市值(亿): {total_mv/1e8:.1f if total_mv is not None else '-'} | ROE: {roe:.2f if roe is not None else '-'} | ROA: {roa:.2f if roa is not None else '-'} | 净利同比: {np_yoy:.2f if np_yoy is not None else '-'}% | 收入({rev_period}): {rev if rev is not None else '-'}"
+            )
+        fundamentals_info = "\n".join(f_lines)
+
     # Build input variables based on the mode
     input_vars = {
         "metrics": str(metrics),
         "logs": logs,
-        "data_info": data_info
+        "data_info": data_info,
+        "fundamentals_info": fundamentals_info,
     }
-    
-    # Add mode-specific variables
-    if optimization_mode and optimization_results:
-        # Format optimization results for the prompt
+
+    # --- Mode-specific prompt selection ---
+    if correlation_mode:
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """
+你是一名量化分析师，正在解读两个标的的相关性分析结果。需基于 6 个维度（线性/协整/因果/滚动/尾部/逻辑）给出要点与建议。
+
+要求：
+1) 先总结相关性的强弱、稳定性，以及是否存在协整/均值回归机会。
+2) 指出领先-滞后关系与因果（Granger、互相关滞后）。
+3) 描述滚动相关的波动与解耦风险。
+4) 给出尾部依赖与风险对冲有效性判断。
+5) 必要时给出操作建议（如：对冲、放弃套利、继续监控）。
+"""),
+            ("human", "Correlation key metrics:\n{correlation_metrics}\n\nFundamentals:\n{fundamentals_info}\n\nReport excerpt:\n{report_excerpt}\n\nData coverage:\n{data_info}")
+        ])
+
+        corr_lines = []
+        if metrics:
+            corr_lines.append(f"Pearson: {metrics.get('pearson')} | Spearman: {metrics.get('spearman')}")
+            corr_lines.append(f"Beta: {metrics.get('beta')} | Rolling vol: {metrics.get('rolling_vol')}")
+            corr_lines.append(f"Tail L/R: {metrics.get('tail_left')} / {metrics.get('tail_right')}")
+        input_vars["correlation_metrics"] = "\n".join(corr_lines) if corr_lines else str(metrics)
+        # Limit report excerpt length to avoid overwhelming model
+        excerpt = logs or ""
+        input_vars["report_excerpt"] = excerpt[:2400]
+
+    elif optimization_mode and optimization_results:
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are a Senior Quantitative Research Analyst specializing in strategy optimization.
+
+## Task: Analyze Parameter Optimization Results
+
+You are reviewing a parameter sweep optimization for a trading strategy.
+
+### Optimization Results:
+{optimization_info}
+
+### Analysis Guidelines:
+1. **最优参数分析**：
+   - 识别最优参数组合及其指标表现
+   - 分析参数敏感性（参数微调对收益的影响）
+   
+2. **参数稳健性**：
+   - 评估参数是否过拟合（是否只在特定区间表现好）
+   - 分析热力图中的"甜点区"分布
+   
+3. **风险警示**：
+   - 指出可能的过拟合风险
+   - 建议样本外测试验证
+   
+4. **实施建议**：
+   - 给出推荐的参数范围（而非单一最优值）
+   - 建议后续的验证步骤
+
+### Base Metrics (if available):
+{metrics}
+
+### Market Data Info:
+{data_info}
+
+Output Requirements:
+- 所有输出必须使用简体中文。
+"""),
+            ("user", "请总结优化结果，给出稳健性与后续验证建议。")
+        ])
+
         opt_info_parts = []
         if isinstance(optimization_results, dict):
             if 'best_params' in optimization_results:
@@ -369,9 +464,13 @@ Market Data Info: {data_info}
             if 'param_sweep_summary' in optimization_results:
                 opt_info_parts.append(f"参数扫描摘要: {optimization_results['param_sweep_summary']}")
         input_vars["optimization_info"] = "\n".join(opt_info_parts) if opt_info_parts else str(optimization_results)
-        
+
     elif benchmark_metrics:
-        # Format benchmark metrics for the prompt
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a senior portfolio analyst. Summarize strategy results and benchmark comparison in Chinese."),
+            ("human", "Performance metrics:\n{metrics}\nBenchmark metrics:\n{benchmark_info}\nData:\n{data_info}")
+        ])
+
         benchmark_info_parts = []
         if isinstance(benchmark_metrics, dict):
             for key, value in benchmark_metrics.items():
@@ -380,7 +479,10 @@ Market Data Info: {data_info}
                 else:
                     benchmark_info_parts.append(f"{key}: {value}")
         input_vars["benchmark_info"] = "\n".join(benchmark_info_parts) if benchmark_info_parts else str(benchmark_metrics)
-    
+
+    # Finalize chain
+    chain = prompt | llm
+
     # Capture formatted messages
     formatted_messages = prompt.format_messages(**input_vars)
     formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])

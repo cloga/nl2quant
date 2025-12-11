@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Pairs Trading Screener - CLI Tool
 命令行工具，用于批量筛选配对交易标的
@@ -11,6 +12,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 import tushare as ts
+import os
+
+# 设置UTF-8编码
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 # 添加项目根目录到路径，以便导入app模块
 ROOT = Path(__file__).resolve().parent.parent
@@ -133,13 +142,14 @@ def main():
         '--days',
         type=int,
         default=365,
-        help='往前回溯天数（默认365）'
+        help='往前回溯天数（已弃用，推荐使用 --trade-days）'
     )
 
     parser.add_argument(
         '--trade-days',
         type=int,
-        help='往前回溯交易日数量（优先于 --days）'
+        default=2500,
+        help='往前回溯交易日数量（默认2500=约10年，优先于 --days）'
     )
     
     parser.add_argument(
@@ -153,6 +163,13 @@ def main():
         type=float,
         default=0.5,
         help='DBSCAN邻域半径（默认0.5）'
+    )
+
+    parser.add_argument(
+        '--min-samples',
+        type=int,
+        default=5,
+        help='DBSCAN min_samples（默认5，可尝试2/3降低簇质量）'
     )
     
     parser.add_argument(
@@ -175,6 +192,12 @@ def main():
         default=0.05,
         help='协整检验p值阈值 (默认0.05)'
     )
+
+    parser.add_argument(
+        '--coint-log-price',
+        action='store_true',
+        help='协整检验使用对数价格（推荐开启）'
+    )
     
     parser.add_argument(
         '--output',
@@ -187,6 +210,13 @@ def main():
         type=str,
         help='输出配对结果为CSV'
     )
+
+    parser.add_argument(
+        '--cluster-html',
+        type=str,
+        default='cluster_vis.html',
+        help='聚类可视化输出HTML路径（默认 cluster_vis.html）'
+    )
     
     args = parser.parse_args()
     
@@ -198,13 +228,18 @@ def main():
 
     end_str = end_date.strftime("%Y%m%d")
 
-    if args.trade_days:
+    # 优先使用交易日（如果没显式设置trade_days，默认值2500将被使用）
+    if args.trade_days != 2500 or args.trade_days is not None:
         start_str = compute_start_date_by_trading_days(end_str, args.trade_days)
         print(f"日期范围: {start_str} ~ {end_str}（回溯 {args.trade_days} 个交易日）")
-    else:
+    elif args.days != 365:
         start_date = end_date - timedelta(days=args.days)
         start_str = start_date.strftime("%Y%m%d")
         print(f"日期范围: {start_str} ~ {end_str}（回溯自然日 {args.days} 天）")
+    else:
+        # 默认使用trade-days 2500
+        start_str = compute_start_date_by_trading_days(end_str, args.trade_days)
+        print(f"日期范围: {start_str} ~ {end_str}（回溯 {args.trade_days} 个交易日，约10年）")
     print(f"PCA参数: n_components={args.n_components}")
     print(f"DBSCAN参数: eps={args.eps}")
     print()
@@ -234,6 +269,8 @@ def main():
         n_components=args.n_components,
         min_corr=args.min_corr,
         pvalue_threshold=args.pvalue,
+        min_samples=args.min_samples,
+        use_log_price=args.coint_log_price,
     )
     
     # 处理结果
@@ -285,6 +322,15 @@ def main():
         with open(args.output, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, ensure_ascii=False, indent=2)
         print(f"✓ 完整结果已保存: {args.output}")
+
+    # 保存聚类可视化
+    if results.get('cluster_fig') is not None:
+        html_path = args.cluster_html
+        try:
+            results['cluster_fig'].write_html(html_path, include_plotlyjs='cdn')
+            print(f"✓ 聚类可视化已保存: {html_path}")
+        except Exception as e:
+            print(f"[WARN] 聚类可视化保存失败: {e}")
 
 
 if __name__ == '__main__':

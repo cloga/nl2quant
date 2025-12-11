@@ -44,6 +44,31 @@ class PairsScreener:
         self.X_pca = None
         self.labels = None
         self.stock_codes = None
+        self.fund_meta = {}
+        self.price_df = None
+
+    def fetch_fund_meta(self, codes: list) -> dict:
+        """获取ETF元数据（基准、类型等），用于过滤同质化标的。"""
+        meta = {}
+        try:
+            df = self.engine.pro.fund_basic(
+                market="E",
+                status="L",
+                fields="ts_code,name,fund_type,invest_type,benchmark",
+            )
+            if df is None or df.empty:
+                return meta
+            df = df[df["ts_code"].isin(codes)]
+            for _, row in df.iterrows():
+                meta[row["ts_code"]] = {
+                    "name": row.get("name"),
+                    "fund_type": row.get("fund_type"),
+                    "invest_type": row.get("invest_type"),
+                    "benchmark": row.get("benchmark"),
+                }
+        except Exception as e:
+            print(f"[WARN] 获取基金元数据失败: {e}")
+        return meta
 
     def fetch_stock_data(self, codes: list) -> pd.DataFrame:
         """获取多只股票的收盘价数据"""
@@ -78,11 +103,40 @@ class PairsScreener:
             raise ValueError("未能获取任何有效的价格数据")
         
         df = pd.DataFrame(prices)
+        
+        # 统计缺失情况
+        missing_pct = df.isnull().sum() / len(df) * 100
+        print(f"\n[数据质量检查]")
+        print(f"  - 成功获取 {len(prices)}/{total} 只标的数据")
+        print(f"  - 失败 {len(failed_codes)} 只")
+        print(f"  - 原始数据行数: {len(df)}")
+        
+        # 删除缺失率过高的列（标的）
+        threshold = 0.5  # 允许50%缺失
+        valid_cols = missing_pct[missing_pct < threshold * 100].index.tolist()
+        if len(valid_cols) == 0:
+            raise ValueError(f"没有符合质量要求的标的（缺失率阈值：{threshold*100}%）")
+        
+        df = df[valid_cols]
+        print(f"  - 删除高缺失率标的后剩余: {len(df.columns)} 只")
+        
+        # 使用forward fill填充缺失值（假设停牌日价格不变）
+        df = df.fillna(method='ffill')
+        # 再使用backward fill处理开头的缺失
+        df = df.fillna(method='bfill')
+        # 最后删除仍有缺失的行
         df = df.dropna()
         
-        print(f"\n[OK] 成功获取 {len(prices)}/{total} 只股票数据，{len(failed_codes)} 只失败")
-        print(f"[OK] 有效数据行数: {len(df)}")
+        print(f"  - 填充后有效数据行数: {len(df)}")
         
+        if len(df) == 0:
+            raise ValueError("填充后无有效数据行")
+        if len(df.columns) < 2:
+            raise ValueError(f"有效标的数量不足（仅 {len(df.columns)} 只），无法进行配对分析")
+        
+        # 记录价格数据用于后续波动率过滤
+        self.price_df = df
+
         return df
 
     def compute_returns(self, price_df: pd.DataFrame) -> pd.DataFrame:
@@ -160,8 +214,15 @@ class PairsScreener:
 
         return None
 
-    def find_cointegrated_pairs(self, returns_df: pd.DataFrame, labels: np.ndarray, min_corr: float = 0.85, pvalue_threshold: float = 0.05) -> pd.DataFrame:
-        """在聚类内部寻找协整配对"""
+    def find_cointegrated_pairs(
+        self,
+        returns_df: pd.DataFrame,
+        labels: np.ndarray,
+        min_corr: float = 0.85,
+        pvalue_threshold: float = 0.05,
+        use_log_price: bool = True,
+    ) -> pd.DataFrame:
+        """在聚类内部寻找协整配对（可选择对价格取对数）"""
         results = []
         stock_codes = returns_df.columns.tolist()
         
@@ -198,12 +259,70 @@ class PairsScreener:
             # 准备多进程任务
             tasks = []
             for s1, s2 in combinations:
-                series1 = returns_df[s1].values
-                series2 = returns_df[s2].values
-                if len(series1) > 100:
+                # --- 同质化标的过滤：同一跟踪标的直接跳过 ---
+                m1 = self.fund_meta.get(s1, {})
+                m2 = self.fund_meta.get(s2, {})
+                bm1 = (m1.get('benchmark') or '').strip().lower()
+                bm2 = (m2.get('benchmark') or '').strip().lower()
+                if bm1 and bm2 and bm1 == bm2:
+                    continue
+
+                # --- 跨品种过滤：强制资产类别不同 ---
+                def infer_asset_class(meta):
+                    name = (meta.get('name') or '').lower()
+                    ftype = (meta.get('fund_type') or '').lower()
+                    itype = (meta.get('invest_type') or '').lower()
+                    text = ' '.join([name, ftype, itype])
+                    if any(k in text for k in ['货币', 'money']):
+                        return 'cash'
+                    if any(k in text for k in ['债', 'bond']):
+                        return 'bond'
+                    if any(k in text for k in ['金', '银', '油', '商品', '期货', '有色', '能源', '钢', '铜']):
+                        return 'commodity'
+                    if any(k in text for k in ['指数', '股票', 'equity', '沪深', '创业板', '中证', '上证', '深证']):
+                        return 'equity'
+                    return 'other'
+
+                ac1 = infer_asset_class(m1)
+                ac2 = infer_asset_class(m2)
+                # 如果两者资产类别相同且类别已知，则跳过；未知类别则放行
+                if ac1 == ac2 and ac1 != 'other':
+                    continue
+
+                # --- 波动率过滤：价差波动不足则跳过 ---
+                price_a = self.price_df[s1]
+                price_b = self.price_df[s2]
+                aligned_a, aligned_b = price_a.align(price_b, join='inner')
+                if len(aligned_a) < 60:
+                    continue
+                # 简单对冲比率：OLS beta
+                try:
+                    beta = np.linalg.lstsq(aligned_b.values.reshape(-1, 1), aligned_a.values, rcond=None)[0][0]
+                    spread = aligned_a - beta * aligned_b
+                    price_mean = (aligned_a + aligned_b).mean()
+                    if price_mean == 0:
+                        continue
+                    spread_vol = spread.std() / price_mean
+                    if spread_vol < 0.01:
+                        continue
+                except Exception:
+                    continue
+
+                # 协整基于价格序列（可选log）
+                price_a = self.price_df[s1]
+                price_b = self.price_df[s2]
+                aligned_a, aligned_b = price_a.align(price_b, join='inner')
+                if len(aligned_a) > 100:
+                    if use_log_price:
+                        series1 = np.log(aligned_a.values)
+                        series2 = np.log(aligned_b.values)
+                    else:
+                        series1 = aligned_a.values
+                        series2 = aligned_b.values
                     tasks.append((series1, series2, s1, s2, min_corr, pvalue_threshold))
             
             # 多进程协整检验
+            cluster_results = []
             if tasks:
                 with Pool(processes=min(cpu_count(), 4)) as pool:
                     # 使用静态方法以避免序列化 self
@@ -216,6 +335,18 @@ class PairsScreener:
             print(f"找到 {sum(1 for r in cluster_results if r)} 对协整配对")
         
         print(f"[OK] 总计检验 {total_pairs} 对，找到 {len(results)} 对协整配对")
+        
+        # 诊断：打印p值统计（即使无结果也有助诊断）
+        if results:
+            pvals = [r['coint_pvalue'] for r in results]
+            print(f"\n[诊断] 协整p值分布：")
+            print(f"  - 最小值: {min(pvals):.6f}")
+            print(f"  - 平均值: {np.mean(pvals):.6f}")
+            print(f"  - 最大值: {max(pvals):.6f}")
+            print(f"  - p < 0.05: {sum(1 for p in pvals if p < 0.05)} 对")
+            print(f"  - p < 0.1:  {sum(1 for p in pvals if p < 0.1)} 对")
+            print(f"  - p < 0.2:  {sum(1 for p in pvals if p < 0.2)} 对")
+            print(f"  - p < 0.3:  {sum(1 for p in pvals if p < 0.3)} 对")
         
         return pd.DataFrame(results) if results else pd.DataFrame()
 
@@ -276,7 +407,16 @@ class PairsScreener:
         print("[OK]")
         return fig
 
-    def run(self, codes: list, eps: float = 0.5, n_components: int = 15, min_corr: float = 0.85, pvalue_threshold: float = 0.05) -> dict:
+    def run(
+        self,
+        codes: list,
+        eps: float = 0.5,
+        n_components: int = 15,
+        min_corr: float = 0.85,
+        pvalue_threshold: float = 0.05,
+        min_samples: int = 2,
+        use_log_price: bool = True,
+    ) -> dict:
         """运行完整的筛选流程"""
         print("\n" + "="*60)
         print("A股配对交易标的筛选 (PCA + DBSCAN + 协整检验)")
@@ -286,6 +426,8 @@ class PairsScreener:
         print("\n[步骤1] 获取股票数据...")
         price_df = self.fetch_stock_data(codes)
         self.stock_codes = price_df.columns.tolist()
+        # 获取ETF元数据，便于后续过滤同质化标的
+        self.fund_meta = self.fetch_fund_meta(self.stock_codes)
         
         # 2. 计算收益率
         print("\n[步骤2] 计算日对数收益率...")
@@ -301,19 +443,31 @@ class PairsScreener:
         
         # 4. DBSCAN 聚类
         print("\n[步骤4] DBSCAN 聚类...")
-        labels = self.perform_dbscan(X_pca, eps=eps, min_samples=2)
+        labels = self.perform_dbscan(X_pca, eps=eps, min_samples=min_samples)
         self.labels = labels
-        
-        # 5. 协整检验
-        print("\n[步骤5] 在聚类内部进行协整检验...")
-        pairs_df = self.find_cointegrated_pairs(returns_df, labels, min_corr=min_corr, pvalue_threshold=pvalue_threshold)
-        
-        # 6. 可视化
-        print("\n[步骤6] 生成可视化...")
-        cluster_fig = self.visualize_clusters(X_pca, labels, self.stock_codes)
-        
-        # 整理结果
-        results = {
+
+        # 5. 协整检验（带过滤器）
+        print("\n[步骤5] 协整检验（含过滤器）...")
+        pairs_df = self.find_cointegrated_pairs(
+            returns_df,
+            labels,
+            min_corr=min_corr,
+            pvalue_threshold=pvalue_threshold,
+            use_log_price=use_log_price,
+        )
+
+        # 可视化（可选）
+        cluster_fig = None
+        try:
+            cluster_fig = self.visualize_clusters(X_pca, labels, self.stock_codes)
+        except Exception as e:
+            print(f"[WARN] 可视化生成失败: {e}")
+
+        print("\n" + "="*60)
+        print("筛选完成！")
+        print("="*60 + "\n")
+
+        return {
             'pairs': pairs_df,
             'cluster_fig': cluster_fig,
             'pca': pca,
@@ -323,11 +477,7 @@ class PairsScreener:
             'returns_df': returns_df,
             'min_corr': min_corr,
             'pvalue_threshold': pvalue_threshold,
+            'min_samples': min_samples,
+            'use_log_price': use_log_price,
         }
-        
-        print("\n" + "="*60)
-        print("筛选完成！")
-        print("="*60 + "\n")
-        
-        return results
 

@@ -31,6 +31,7 @@ venv.bak/
 *.parquet
 *.sqlite
 cache/
+.cache/
 
 # Output files
 outputs/
@@ -46,3 +47,4 @@ analysis_*.txt
 # OS specific
 .DS_Store
 Thumbs.db
+.devcontainer/
