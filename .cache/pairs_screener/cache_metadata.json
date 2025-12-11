@@ -4653,5 +4653,3323 @@
     "end_date": "20251210",
     "timestamp": "2025-12-10T23:08:46.327675",
     "data_points": 250
+  },
+  "29d71d55446c9ed0aaec7545dc211e8f": {
+    "code": "560550.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:48.352639",
+    "data_points": 250
+  },
+  "3bf41ba9bc5072398f9d96b90315ff25": {
+    "code": "562990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:50.377068",
+    "data_points": 250
+  },
+  "f5dcf037c6371f84e780c30c1740bbf3": {
+    "code": "513280.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:52.378853",
+    "data_points": 250
+  },
+  "b95528631575b3ef7b8c0ac686510c4e": {
+    "code": "513220.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:54.325985",
+    "data_points": 250
+  },
+  "7ce45fcad61c3fff4991ade5adde0e36": {
+    "code": "561700.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:56.113447",
+    "data_points": 250
+  },
+  "249fb42ae4dd2fd4c26b4f017a9ef557": {
+    "code": "513120.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:08:58.127868",
+    "data_points": 250
+  },
+  "bc533ccd89f8fb4620a84e771654b0d5": {
+    "code": "561160.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:00.106392",
+    "data_points": 250
+  },
+  "08181ddb3a8b414270a6a0245132a2d2": {
+    "code": "562350.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:02.112726",
+    "data_points": 250
+  },
+  "48aaeee35d33abb3cd5c41f71d5a2ee1": {
+    "code": "159636.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:04.143520",
+    "data_points": 250
+  },
+  "ef4c3deccbd2936266aba32f27e287f4": {
+    "code": "159628.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:06.159078",
+    "data_points": 250
+  },
+  "6965d3becc83288d62f76d11389920f8": {
+    "code": "159635.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:08.124660",
+    "data_points": 250
+  },
+  "fa2afe47e2d271f51be7e51e37c47478": {
+    "code": "508008.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:09.886527",
+    "data_points": 250
+  },
+  "f703c86312e3ab40f5c79fec0f66e1be": {
+    "code": "159615.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:11.703373",
+    "data_points": 250
+  },
+  "74580e07ee7418763c225b459d9db983": {
+    "code": "159609.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:13.686180",
+    "data_points": 250
+  },
+  "95cd0ee67cd5317544296e0f6cfb776f": {
+    "code": "560650.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:15.673563",
+    "data_points": 250
+  },
+  "d96bf6801b294363abf2213151d1fd57": {
+    "code": "560990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:17.657069",
+    "data_points": 250
+  },
+  "74aa5c8cc1b59b7b1d4828a70a101da9": {
+    "code": "162721.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:19.696607",
+    "data_points": 203
+  },
+  "3952657edbbf5f60cf55f577ed9c3e20": {
+    "code": "159617.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:21.642065",
+    "data_points": 249
+  },
+  "f468b883134703b64953c7073d509ce5": {
+    "code": "159603.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:23.402131",
+    "data_points": 250
+  },
+  "ba5fe96dff042ddfd37346898a2187f1": {
+    "code": "560900.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:25.156421",
+    "data_points": 250
+  },
+  "1588421fcdf2af949858372534145c61": {
+    "code": "588260.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:27.278580",
+    "data_points": 250
+  },
+  "4f7e7599f7d45c2d9f2630cad6d42e9f": {
+    "code": "588100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:29.217650",
+    "data_points": 250
+  },
+  "42983d320b6dd35e469e7765cc37c77a": {
+    "code": "517990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:31.201403",
+    "data_points": 250
+  },
+  "b3999de31b3afa2c58d3da57f167c6c3": {
+    "code": "159612.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:33.228963",
+    "data_points": 248
+  },
+  "f81cce191b6286d25515e08f06663e4f": {
+    "code": "517850.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:35.176646",
+    "data_points": 250
+  },
+  "e3ed2161a9faa21c19eb76d30d6283e0": {
+    "code": "159797.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:37.001332",
+    "data_points": 250
+  },
+  "0d42d033b2ea55e312f38180e8da8212": {
+    "code": "159798.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:39.030774",
+    "data_points": 250
+  },
+  "34564636f2dd846a50e7ccfde2ff0e4c": {
+    "code": "513380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:40.979930",
+    "data_points": 250
+  },
+  "b601ac94f833f5e5c91fa2ab206989b2": {
+    "code": "561560.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:42.947654",
+    "data_points": 250
+  },
+  "a013138967da246f3e28f6f2d59fe712": {
+    "code": "159625.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:44.990321",
+    "data_points": 250
+  },
+  "dd64f900cad6d5ca72da53933c21c953": {
+    "code": "508018.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:46.998362",
+    "data_points": 250
+  },
+  "8bc8cafa8d056ac8f3fe889bd967706e": {
+    "code": "159618.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:48.964626",
+    "data_points": 250
+  },
+  "6fe33dd106f414c68dd85e3c5b228061": {
+    "code": "513530.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:50.772012",
+    "data_points": 250
+  },
+  "c60e509002969e6785433c77e6ebc1fc": {
+    "code": "501217.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:52.768711",
+    "data_points": 223
+  },
+  "f78dbb028d90f0fdfc6a53ec0d02639c": {
+    "code": "560880.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:54.769411",
+    "data_points": 250
+  },
+  "3378973966a08a3536b1e65032969efa": {
+    "code": "159831.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:56.774300",
+    "data_points": 250
+  },
+  "460d9b81208f89b730daf15cf4e4a8cd": {
+    "code": "161133.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:09:58.731776",
+    "data_points": 207
+  },
+  "9e665cb414ae0e3cd278d9018862b3ef": {
+    "code": "517900.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:00.749427",
+    "data_points": 250
+  },
+  "3c77965ec9a760f6d10a9075d20cf6fe": {
+    "code": "513070.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:02.738317",
+    "data_points": 250
+  },
+  "bf53300382464a38d29377e3ea25932d": {
+    "code": "562520.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:04.803505",
+    "data_points": 250
+  },
+  "1edd0ed21e007e56a90ea12f1f53a931": {
+    "code": "159776.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:06.779539",
+    "data_points": 250
+  },
+  "fc15820839eabf2ba3944a9b15dbb242": {
+    "code": "159787.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:08.786170",
+    "data_points": 250
+  },
+  "ec90cb17bb12e6f9161459b9afd97e29": {
+    "code": "159834.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:10.837460",
+    "data_points": 250
+  },
+  "2876238e46e9694585bc423a36d79269": {
+    "code": "159796.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:12.635513",
+    "data_points": 250
+  },
+  "1a3d0ca27da1714a6605ba7d403d609b": {
+    "code": "513320.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:14.593762",
+    "data_points": 250
+  },
+  "adb8a5e2a81b23786eb50656850f1854": {
+    "code": "159791.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:16.591885",
+    "data_points": 249
+  },
+  "1fcfc64a6ad35919f29943ee86fa43d8": {
+    "code": "159788.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:18.516302",
+    "data_points": 250
+  },
+  "d5c301932b6390c4fa7f65231c7550ed": {
+    "code": "159619.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:20.336943",
+    "data_points": 250
+  },
+  "2b10cadfcc3d347b15feb294be35344b": {
+    "code": "513770.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:22.295305",
+    "data_points": 250
+  },
+  "f278209b8c242907c0e42c11ebc428cc": {
+    "code": "159768.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:24.338333",
+    "data_points": 250
+  },
+  "c2d461e378be382a16f76cbffb774978": {
+    "code": "159795.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:26.346010",
+    "data_points": 250
+  },
+  "e8317e688cd6a110c1f58a201aee39d8": {
+    "code": "560100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:28.124757",
+    "data_points": 250
+  },
+  "82ab9bf9a32476a21f8bc56d15a397d6": {
+    "code": "159750.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:30.061629",
+    "data_points": 250
+  },
+  "75f4a75bac1a471e578973e0ce71d0db": {
+    "code": "513150.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:31.808951",
+    "data_points": 250
+  },
+  "3262367a2494df64923f554fc0798e51": {
+    "code": "561120.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:33.901811",
+    "data_points": 250
+  },
+  "a371527a10d1441d8551b982f5d7d60e": {
+    "code": "159778.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:35.898820",
+    "data_points": 250
+  },
+  "e124c7b7fd51c20a8ecda7305716855e": {
+    "code": "561100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:37.827741",
+    "data_points": 250
+  },
+  "04add7ccbed25e1987044c6a416c0db7": {
+    "code": "517550.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:39.612933",
+    "data_points": 250
+  },
+  "1095441849ed0876ffeeb7a3a6236475": {
+    "code": "513020.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:41.626084",
+    "data_points": 250
+  },
+  "4c1be93ee8c3cd18d9e88c48bfe1df51": {
+    "code": "513200.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:43.625309",
+    "data_points": 250
+  },
+  "d34e73de54c1ea7b98453087458d216a": {
+    "code": "159613.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:45.624423",
+    "data_points": 250
+  },
+  "067b6c93d003797d5d7debc1043cbe39": {
+    "code": "159738.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:47.606535",
+    "data_points": 250
+  },
+  "5522d6f0f1c06030fae5e54475065b7a": {
+    "code": "513160.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:49.684607",
+    "data_points": 250
+  },
+  "fdb868ef600e30020641787a699fc99d": {
+    "code": "513230.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:51.646614",
+    "data_points": 250
+  },
+  "d0a5c90371032e67e97061eba063276f": {
+    "code": "562950.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:53.633111",
+    "data_points": 250
+  },
+  "b4cb89a1053aece66ce50f464e5dcf52": {
+    "code": "159775.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:55.669518",
+    "data_points": 250
+  },
+  "f22bfad5b5b9975e0061dfe3677b4706": {
+    "code": "516530.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:57.704849",
+    "data_points": 250
+  },
+  "fa0c08279a118999f3320527d3d44593": {
+    "code": "160326.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:10:59.676532",
+    "data_points": 239
+  },
+  "350199e3812860fa19837dc414fb5b70": {
+    "code": "516810.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:01.687033",
+    "data_points": 250
+  },
+  "89ca31ffd4084c0b956df9e43d4cddd3": {
+    "code": "159728.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:03.682565",
+    "data_points": 249
+  },
+  "b481e376f1b1f54bdd2331dd69fa5c25": {
+    "code": "159611.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:05.708052",
+    "data_points": 250
+  },
+  "f902fc86ebfa16aac60a85dbc1f9132d": {
+    "code": "159743.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:07.407102",
+    "data_points": 250
+  },
+  "3f0f6f81c7643bd3a7e8c34e2d82f823": {
+    "code": "562910.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:09.505003",
+    "data_points": 250
+  },
+  "c4394e7c8c099552489d8da0dc31efd9": {
+    "code": "560800.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:11.442264",
+    "data_points": 250
+  },
+  "c9989886a1729ce2717ea867e9071729": {
+    "code": "562510.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:13.394825",
+    "data_points": 250
+  },
+  "a7e74fcb2e08c6cee8bfcd363bfaf79b": {
+    "code": "562300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:15.233511",
+    "data_points": 250
+  },
+  "d34280bb682b3c4ae84cc713306de08b": {
+    "code": "159758.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:17.185046",
+    "data_points": 250
+  },
+  "712af31f0685fbfdf0129520ea42b67a": {
+    "code": "159606.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:19.221129",
+    "data_points": 250
+  },
+  "dd9dfdae0c18839a8d3f95d1810ed5f1": {
+    "code": "517090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:21.234168",
+    "data_points": 250
+  },
+  "d9c317545961fafe8f6c9c76ec65f8aa": {
+    "code": "159719.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:23.245581",
+    "data_points": 250
+  },
+  "46684d96b76c708bb77fd30ecb630167": {
+    "code": "513890.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:25.179489",
+    "data_points": 250
+  },
+  "e16ce227dd6d185c325c9422e20e19db": {
+    "code": "517180.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:27.032904",
+    "data_points": 250
+  },
+  "af8a8a14088faf6ea5e2cfe3181e214c": {
+    "code": "562500.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:28.931479",
+    "data_points": 250
+  },
+  "673fe721476111cc83b576c2b9b9848f": {
+    "code": "159711.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:30.793322",
+    "data_points": 250
+  },
+  "21cfc4d774035f8f1704b69b88c08f54": {
+    "code": "159718.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:33.009676",
+    "data_points": 250
+  },
+  "548af636a9a236e402cef089ca64559e": {
+    "code": "501216.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:34.990172",
+    "data_points": 224
+  },
+  "49f5e3d2f20fd3e8d0e333a191fdbd62": {
+    "code": "159608.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:36.990505",
+    "data_points": 250
+  },
+  "70e99fe54a08105a28139216d45c9e84": {
+    "code": "516350.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:39.103158",
+    "data_points": 250
+  },
+  "adf9389a0bf0101000c91d4628d8db08": {
+    "code": "159701.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:41.009235",
+    "data_points": 250
+  },
+  "222e5ea6e22eac8bf7bef7617ce51c04": {
+    "code": "501219.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:42.997680",
+    "data_points": 250
+  },
+  "5025c471a85a82dfbc3ecdc227d964f5": {
+    "code": "159730.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:45.029187",
+    "data_points": 250
+  },
+  "c8850fa9832bc9b0f8cafa192c4a74df": {
+    "code": "159610.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:47.036630",
+    "data_points": 250
+  },
+  "b88fbf268e5d2ff37563cc4ffe4d249e": {
+    "code": "159751.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:49.041052",
+    "data_points": 250
+  },
+  "8bfd0e5e06370e047adf6d45533b0519": {
+    "code": "588150.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:51.029452",
+    "data_points": 250
+  },
+  "fc5187128cb2bd8a4c2bedfca60de715": {
+    "code": "517390.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:53.058035",
+    "data_points": 250
+  },
+  "e4b06e67af7074c63a6a11ff09bffa02": {
+    "code": "159706.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:55.240517",
+    "data_points": 250
+  },
+  "4d921f118d2d081b0e75b193e161af88": {
+    "code": "501211.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:57.163864",
+    "data_points": 199
+  },
+  "cb9b25815ca6cae59ff2e33d80fc6b77": {
+    "code": "159760.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:11:59.334856",
+    "data_points": 250
+  },
+  "0b9b2bee206a36f847817b6dc60afcf9": {
+    "code": "508099.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:01.659576",
+    "data_points": 250
+  },
+  "23ab473a54d459248d19fd14bc78c23a": {
+    "code": "180202.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:10.726998",
+    "data_points": 250
+  },
+  "0f3bb9c41e4e77222b78956e119595e9": {
+    "code": "159731.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:12.578612",
+    "data_points": 249
+  },
+  "02000c04900646fc135c574e6c33b68a": {
+    "code": "562900.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:14.648652",
+    "data_points": 250
+  },
+  "bb214044b6db1f22a71be6549aa953e6": {
+    "code": "561550.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:16.671186",
+    "data_points": 250
+  },
+  "e8b5e9a2932a30470c6ce2a804bc12a5": {
+    "code": "561990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:18.622697",
+    "data_points": 250
+  },
+  "18f085f2098994aa6fc24bbdd125794a": {
+    "code": "561300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:20.733129",
+    "data_points": 250
+  },
+  "52163f6dabe083dca60128c41bf4526e": {
+    "code": "517160.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:22.906625",
+    "data_points": 249
+  },
+  "ba45d8eed43e599be4b9a6ee09fcdd3b": {
+    "code": "517330.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:24.884125",
+    "data_points": 248
+  },
+  "e80a32b193d72be76cbd8f803a78f4ab": {
+    "code": "517770.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:27.160975",
+    "data_points": 250
+  },
+  "d4ec6e50b8bcef3622e7bdbb3d4091e7": {
+    "code": "159607.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:29.512018",
+    "data_points": 250
+  },
+  "d31b2d234b72db5842d5beeb0523c4fe": {
+    "code": "159761.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:31.763591",
+    "data_points": 250
+  },
+  "22f821d9a3eb0b41d87344512bfe5b2c": {
+    "code": "159748.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:33.710596",
+    "data_points": 250
+  },
+  "3e2722cd05c3c6ac9f8ac71afcb6e074": {
+    "code": "501218.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:36.330827",
+    "data_points": 223
+  },
+  "f6664e90bca32b95bc7c165bc1ed2da2": {
+    "code": "159605.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:38.251851",
+    "data_points": 250
+  },
+  "65812f7cd8e932b4a90a89adb5f89baa": {
+    "code": "588310.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:40.191942",
+    "data_points": 250
+  },
+  "17801046219f9184d0fe86942e2da174": {
+    "code": "159779.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:42.420020",
+    "data_points": 250
+  },
+  "eb85b8633655fa4cfbf7f587a2c2cf75": {
+    "code": "517880.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:44.594663",
+    "data_points": 249
+  },
+  "03db739a12fdca8864e9ddc35897ccb0": {
+    "code": "159896.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:46.612574",
+    "data_points": 250
+  },
+  "094d1789c75482215bff373b63752d91": {
+    "code": "501215.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:48.561185",
+    "data_points": 249
+  },
+  "b5fd82e6b27d9fdf5df5b4b3e053b3a4": {
+    "code": "159726.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:50.714381",
+    "data_points": 250
+  },
+  "1d77c995402b07fc5a988f536b0eec27": {
+    "code": "561310.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:52.845555",
+    "data_points": 250
+  },
+  "bf5e8905f18f92505f17ce91d985364f": {
+    "code": "501210.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:54.806298",
+    "data_points": 223
+  },
+  "454b3576af575a8b326685b8d47adb38": {
+    "code": "501213.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:57.034802",
+    "data_points": 241
+  },
+  "fd97fb415769e0113613689e8774f9d1": {
+    "code": "159793.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:12:59.006404",
+    "data_points": 249
+  },
+  "bbe27f9702aeae40f6ded3a57b822f03": {
+    "code": "159707.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:01.608107",
+    "data_points": 250
+  },
+  "37f48c6a3fb4d81fb3703de46284c63e": {
+    "code": "516730.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:03.568479",
+    "data_points": 250
+  },
+  "da4874783896f33d0779179a93e70db7": {
+    "code": "159739.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:05.520585",
+    "data_points": 250
+  },
+  "af53268530c3e9c1b58fca0cd96f21de": {
+    "code": "501212.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:08.141234",
+    "data_points": 237
+  },
+  "77200756408047e8cd2ddbb3d6d58c89": {
+    "code": "159601.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:19.094952",
+    "data_points": 250
+  },
+  "214e74caf9ec21a6e253cf256c638292": {
+    "code": "563000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:21.058246",
+    "data_points": 250
+  },
+  "faeb8436abeba52f03e430854e6636af": {
+    "code": "159602.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:23.070394",
+    "data_points": 250
+  },
+  "81f07af1e3af6b504f68360bd90e2bb4": {
+    "code": "560050.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:25.143367",
+    "data_points": 250
+  },
+  "202ad6b8a87a6fcb6aff7dda8dd21f19": {
+    "code": "516750.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:26.984249",
+    "data_points": 250
+  },
+  "d034e096f6cb417811112de869403484": {
+    "code": "159712.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:28.820979",
+    "data_points": 250
+  },
+  "754a15a11e8914c79d6413faf9c4d7af": {
+    "code": "159862.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:30.877034",
+    "data_points": 250
+  },
+  "7836a297d6b4e37b011840518ea3955f": {
+    "code": "159770.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:33.006952",
+    "data_points": 250
+  },
+  "2c346382db54fe184a589ef8b7e22aea": {
+    "code": "159877.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:34.846674",
+    "data_points": 250
+  },
+  "e48fe09cd1ad4658b494697fba094332": {
+    "code": "516620.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:36.852842",
+    "data_points": 250
+  },
+  "2ac5cbda51360ea52d6474b5cf3a56c6": {
+    "code": "159895.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:38.705610",
+    "data_points": 250
+  },
+  "ca1cf7880e5a5088cba6af82c4131e6e": {
+    "code": "588280.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:40.670517",
+    "data_points": 250
+  },
+  "1e6baccbd055c7306a6f3b3b80e1bf44": {
+    "code": "517660.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:42.664334",
+    "data_points": 250
+  },
+  "e6db4991f32c8a73d096b7ec8c05a398": {
+    "code": "159892.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:44.806042",
+    "data_points": 250
+  },
+  "453de236d4d65b9753148f3e6cf3ad3b": {
+    "code": "516130.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:46.697584",
+    "data_points": 250
+  },
+  "9b2fd6b222fef44043ef99bd331cc28c": {
+    "code": "159723.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:48.785365",
+    "data_points": 249
+  },
+  "d071bc928688a0a638ea83c1be86510f": {
+    "code": "159777.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:50.703234",
+    "data_points": 250
+  },
+  "39808bfe61f21ca2223b852bf680831d": {
+    "code": "561130.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:52.710546",
+    "data_points": 250
+  },
+  "e1af24e4bf0c6cc3ca6b0650d96bb6db": {
+    "code": "516860.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:54.757841",
+    "data_points": 250
+  },
+  "a38af8e31f59a9ae4f0ad05da552e5b7": {
+    "code": "159773.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:57.302038",
+    "data_points": 250
+  },
+  "8c1cc73f87f27745265cc869159f70d7": {
+    "code": "562360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:13:59.258985",
+    "data_points": 250
+  },
+  "9633c096df209dbecaf684478166ecf3": {
+    "code": "560000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:01.398304",
+    "data_points": 250
+  },
+  "fa494d16d8a35e2444fe519eac453661": {
+    "code": "510770.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:03.932831",
+    "data_points": 250
+  },
+  "c6f42f0d838223815b4d4134d32c61bf": {
+    "code": "159717.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:06.258282",
+    "data_points": 250
+  },
+  "8e20f3062ed1486cc8cfc0ceb33b0adb": {
+    "code": "159792.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:08.263154",
+    "data_points": 250
+  },
+  "da3854510e0793a3d5c0f21c493b6b9d": {
+    "code": "562800.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:10.318532",
+    "data_points": 250
+  },
+  "2291346c3195990a59f4683e0843b7a2": {
+    "code": "517030.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:12.282285",
+    "data_points": 250
+  },
+  "b333cfc2130a73793e52919847daaa1c": {
+    "code": "159736.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:14.305752",
+    "data_points": 250
+  },
+  "d44b5b5dadfd335d54509dfc609cf2c9": {
+    "code": "516190.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:16.252252",
+    "data_points": 250
+  },
+  "f8160c43519ade7e71bbd5ec9462988a": {
+    "code": "517110.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:18.399607",
+    "data_points": 250
+  },
+  "1e7cbc56ecf703ac06c7d21c0137fefb": {
+    "code": "516560.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:20.355205",
+    "data_points": 250
+  },
+  "9324ad59c4369bc00838691376867825": {
+    "code": "516210.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:22.295385",
+    "data_points": 250
+  },
+  "920f6ba09baa8f89037dd5aba7ca124e": {
+    "code": "501209.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:24.340577",
+    "data_points": 244
+  },
+  "16fc3285cfc29b69d2535ca5cdb6d168": {
+    "code": "506008.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:26.283755",
+    "data_points": 250
+  },
+  "fdc762ad83b7511667a3ab6a42e1dc02": {
+    "code": "159715.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:28.248073",
+    "data_points": 250
+  },
+  "a68bfc897bb13adb7ba748b740c3d5de": {
+    "code": "159889.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:30.143266",
+    "data_points": 250
+  },
+  "2889b8627ac109904870c98ad8e4584a": {
+    "code": "561600.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:32.510144",
+    "data_points": 250
+  },
+  "4e85bc11d4aa4eeec208beafe023b09f": {
+    "code": "560560.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:34.443809",
+    "data_points": 250
+  },
+  "58b001dc689f3ff8bdd945f6bd49ea1d": {
+    "code": "516630.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:36.499064",
+    "data_points": 250
+  },
+  "c540a16faeddcd81830fea68ea8d9e08": {
+    "code": "588390.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:39.054481",
+    "data_points": 250
+  },
+  "1b16b4ca38a7940803ca46ec1481c11c": {
+    "code": "159763.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:41.934659",
+    "data_points": 250
+  },
+  "c2ac183480265ff3952e8fc0ca53347b": {
+    "code": "516640.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:44.581900",
+    "data_points": 250
+  },
+  "c526b995fc96a964421da0be1ccd860f": {
+    "code": "561350.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:46.641416",
+    "data_points": 250
+  },
+  "b48340827219f770858b955456680583": {
+    "code": "516790.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:48.880683",
+    "data_points": 250
+  },
+  "434a40c0775e4200d4e76af1c9572198": {
+    "code": "159732.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:50.943451",
+    "data_points": 250
+  },
+  "2bf57986be26b118dfbcbc786e51409d": {
+    "code": "561800.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:53.005983",
+    "data_points": 250
+  },
+  "d64b78aa9c43bba7b7318ed1ce3d2a61": {
+    "code": "516290.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:55.377331",
+    "data_points": 250
+  },
+  "2aab69e92d6b90bc38b7f897995f455c": {
+    "code": "159875.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:57.700835",
+    "data_points": 250
+  },
+  "e925fbb0c7f7e74522c991044ed7cd0c": {
+    "code": "159767.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:14:59.841529",
+    "data_points": 250
+  },
+  "6fad68d044f00b344a6ebaa200f55ce8": {
+    "code": "560660.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:02.013505",
+    "data_points": 250
+  },
+  "b0f1ca5034d3115c96e3c920d597eab5": {
+    "code": "159840.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:03.947688",
+    "data_points": 250
+  },
+  "e2ef72b84c1af178f1787b5f31b109d7": {
+    "code": "159713.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:06.624417",
+    "data_points": 250
+  },
+  "707113bec94672bca8f77a180a8021cb": {
+    "code": "516930.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:08.777242",
+    "data_points": 250
+  },
+  "ec4fd840e8a8dd532bcbbbe3288f4e93": {
+    "code": "560500.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:10.927487",
+    "data_points": 250
+  },
+  "6e817d03345c372d58a32724b535eb73": {
+    "code": "516710.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:12.945194",
+    "data_points": 250
+  },
+  "daca613a50bdfa84eab0ad367cb63076": {
+    "code": "561910.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:14.835451",
+    "data_points": 250
+  },
+  "f1a5086021514bb55ac5bb395d1c008c": {
+    "code": "517800.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:17.066697",
+    "data_points": 250
+  },
+  "2c6d8e5948f65645a14d2f182a401413": {
+    "code": "517010.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:19.092721",
+    "data_points": 250
+  },
+  "65eefc95a03d92ced72a0b16528ee177": {
+    "code": "513590.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:21.451516",
+    "data_points": 250
+  },
+  "5687043c2c01c69364418f9c881fb53b": {
+    "code": "159790.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:23.726997",
+    "data_points": 250
+  },
+  "09514e4f4a099e5083f13c61428c5746": {
+    "code": "159786.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:25.567277",
+    "data_points": 250
+  },
+  "1c862a0a47950b73ad90e844588e764c": {
+    "code": "159864.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:27.903903",
+    "data_points": 250
+  },
+  "7b611b43d3d7de6adc93d0ebcc3a9c13": {
+    "code": "517380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:30.067478",
+    "data_points": 250
+  },
+  "ef26bfc9abed93334ea39cebf18ee4cd": {
+    "code": "516920.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:32.915336",
+    "data_points": 250
+  },
+  "a04ed5704a28f04eecd4bc86d1067190": {
+    "code": "159838.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:34.874970",
+    "data_points": 250
+  },
+  "08c5d14c33df0d27acdab0f4aa40a322": {
+    "code": "516720.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:36.950902",
+    "data_points": 243
+  },
+  "14675fbba7b9d27557bcc08917e7bcdd": {
+    "code": "516260.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:39.574609",
+    "data_points": 250
+  },
+  "0bfdde13a030dc6244c96b5c1e5dcc3d": {
+    "code": "159757.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:42.035734",
+    "data_points": 250
+  },
+  "2f59ec23cd88aec4f3a65510e6eb980f": {
+    "code": "159752.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:44.796567",
+    "data_points": 250
+  },
+  "37e11e22fd8d10360ddf97446eab0732": {
+    "code": "159766.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:46.747979",
+    "data_points": 250
+  },
+  "6d9b8a689687c170f271e54037104e42": {
+    "code": "516580.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:48.809690",
+    "data_points": 250
+  },
+  "2ac279c11aaebcd3ca0318df2225d942": {
+    "code": "588060.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:51.278695",
+    "data_points": 250
+  },
+  "ba814742f9d74d5a0d9e7b5b9a52e5d6": {
+    "code": "516100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:53.409372",
+    "data_points": 250
+  },
+  "5d19bd213603bb201dbd2d834122fa7b": {
+    "code": "562880.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:56.168284",
+    "data_points": 250
+  },
+  "503ebbbb23b0c9c5909e3aa6a31cb9e3": {
+    "code": "513700.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:15:58.846660",
+    "data_points": 250
+  },
+  "f9f5329366f4b307a5f5cd431f7c3b08": {
+    "code": "516890.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:00.874950",
+    "data_points": 250
+  },
+  "7abab62bd19a0148de161cf6bbc3463d": {
+    "code": "516270.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:02.818222",
+    "data_points": 250
+  },
+  "f7541eacbbf3eb28722d9cfd694f253f": {
+    "code": "159729.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:04.996851",
+    "data_points": 250
+  },
+  "f639dad7d3e6d73ae821e1d922e1b4e1": {
+    "code": "517120.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:07.254436",
+    "data_points": 250
+  },
+  "4088ec9a1e0592944f7c818ebdf8d487": {
+    "code": "159847.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:09.323566",
+    "data_points": 250
+  },
+  "7dcadb7c32435817484bb9dd8564a43b": {
+    "code": "159720.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:12.165160",
+    "data_points": 250
+  },
+  "7de43a83dbe88a9f4de3da98f75f2743": {
+    "code": "159830.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:20.280582",
+    "data_points": 250
+  },
+  "d2362ff9c76f6aaaa08c2af78805cb03": {
+    "code": "561900.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:22.033887",
+    "data_points": 250
+  },
+  "c4cfba89ca2e789b8440f5e330496531": {
+    "code": "159747.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:24.045391",
+    "data_points": 250
+  },
+  "6e2854ec8474dc1455741c4c09f32cee": {
+    "code": "159782.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:26.088528",
+    "data_points": 250
+  },
+  "b418fbf62f82c4e019f214c8ad640b41": {
+    "code": "588330.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:28.120710",
+    "data_points": 250
+  },
+  "367c3396fc591d4c6f9673a33627647f": {
+    "code": "588380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:30.467122",
+    "data_points": 250
+  },
+  "3dc3cb6799583a41a3a413d06f245622": {
+    "code": "588360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:32.587100",
+    "data_points": 250
+  },
+  "741984b8e1bc8f0f9607813b3ddf307d": {
+    "code": "159781.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:34.526019",
+    "data_points": 250
+  },
+  "1955fdb1a6dbb780c6a8af9c433d01c4": {
+    "code": "588400.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:36.645271",
+    "data_points": 250
+  },
+  "cdaf02b4e181cd3c362270f5cd2a8762": {
+    "code": "588300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:38.761541",
+    "data_points": 250
+  },
+  "931cd425d83c6bb2e683c654690f2fb0": {
+    "code": "159783.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:40.719252",
+    "data_points": 250
+  },
+  "29211d779dc421c16d8ca9b6b3322cc7": {
+    "code": "516830.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:42.612553",
+    "data_points": 250
+  },
+  "1d2edfcf5b59cb8a51dafe10e055e04d": {
+    "code": "588180.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:44.803702",
+    "data_points": 250
+  },
+  "743b2a79525edc6a2cc3955af9df8276": {
+    "code": "159859.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:47.570276",
+    "data_points": 250
+  },
+  "328be15d7682ff347cba5c399918e59a": {
+    "code": "159780.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:49.725459",
+    "data_points": 250
+  },
+  "5f7b2bd7293b66fd405ea0f91af45855": {
+    "code": "516970.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:51.677710",
+    "data_points": 250
+  },
+  "eb37c6fe4def059e75fb94c2b40814cb": {
+    "code": "513980.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:53.841262",
+    "data_points": 250
+  },
+  "6e3ce815bf4ac5f34502ee0eeb3092d8": {
+    "code": "510990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:55.978893",
+    "data_points": 250
+  },
+  "a8bcdb75c042c9378f5d089d6b1f755f": {
+    "code": "159716.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:16:58.120259",
+    "data_points": 245
+  },
+  "0b13bf7b3cb68041b2ada548893d2372": {
+    "code": "159899.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:00.303014",
+    "data_points": 250
+  },
+  "37bfea23ef0f34aa9b942d0b69f6d6dc": {
+    "code": "159709.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:02.452315",
+    "data_points": 250
+  },
+  "8609f404bd5371e4ece0f20887c1969e": {
+    "code": "517360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:04.389810",
+    "data_points": 250
+  },
+  "ecdd545f790a6e34dcaa3f9a11e18e61": {
+    "code": "159708.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:06.436591",
+    "data_points": 250
+  },
+  "0e0652840e6af8b2332c536925f98fcd": {
+    "code": "159721.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:08.386245",
+    "data_points": 246
+  },
+  "53cbcd2c0d65655d26cd432eb035edcd": {
+    "code": "561500.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:10.408323",
+    "data_points": 250
+  },
+  "ea09dc058d74a6059ea583153237b41f": {
+    "code": "513860.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:12.400533",
+    "data_points": 250
+  },
+  "101fa0c6e95a76504f5c102e29d0965c": {
+    "code": "159881.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:14.393855",
+    "data_points": 250
+  },
+  "12d24d45de76f36cea758acaca2e8e22": {
+    "code": "159872.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:16.443028",
+    "data_points": 250
+  },
+  "94dc20b3fc09eb7e41d23ae0dd182777": {
+    "code": "516980.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:18.419057",
+    "data_points": 250
+  },
+  "499a6d1fda94f7d334687a34828f29ed": {
+    "code": "159755.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:20.443152",
+    "data_points": 250
+  },
+  "29f2a6b22d11343e5d371300b35f81a7": {
+    "code": "159725.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:22.414250",
+    "data_points": 250
+  },
+  "e68e2dbf72fb69a7c639c13f2a0ac53c": {
+    "code": "516650.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:24.420721",
+    "data_points": 250
+  },
+  "f88390a512e6a88218da8b15e0d9c739": {
+    "code": "516570.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:26.449508",
+    "data_points": 250
+  },
+  "8eae107c991a788a23e6bdd1295c198c": {
+    "code": "516820.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:28.416547",
+    "data_points": 250
+  },
+  "57fbc2c732590b401b7b6a601ef5cc38": {
+    "code": "159745.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:30.211008",
+    "data_points": 250
+  },
+  "166578ffa6be2ce82ce559d01ef2f908": {
+    "code": "513360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:32.177645",
+    "data_points": 249
+  },
+  "adbf52c3712db782bd76fa78a4be2f51": {
+    "code": "180101.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:34.200063",
+    "data_points": 248
+  },
+  "60584f4a00e7439869a819914675c879": {
+    "code": "180201.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:36.243643",
+    "data_points": 250
+  },
+  "321e9cced126ffda21a331c451057c1c": {
+    "code": "508027.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:39.586537",
+    "data_points": 250
+  },
+  "374a5e30d3b7f2e6da1c19356b66af41": {
+    "code": "180301.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:41.515450",
+    "data_points": 250
+  },
+  "82fea259cab991a6726ae5cf8b030f68": {
+    "code": "508006.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:43.486625",
+    "data_points": 250
+  },
+  "cadfc55ed17358bbb0cf5cb90f09cdf4": {
+    "code": "180801.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:45.503564",
+    "data_points": 250
+  },
+  "03214f49689dd07b33dabba092022374": {
+    "code": "508001.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:47.464578",
+    "data_points": 250
+  },
+  "cb63c6f9b897f18d5777e5ec898e91eb": {
+    "code": "508056.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:49.472762",
+    "data_points": 250
+  },
+  "f27b4fac437a852af5a3151f5f6862b7": {
+    "code": "508000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:51.291763",
+    "data_points": 250
+  },
+  "078a49dadcce1b495db1ce2e097d3036": {
+    "code": "516380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:53.236140",
+    "data_points": 250
+  },
+  "ab362fcd79bd0a343f6e44809d4e01c4": {
+    "code": "516390.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:55.228189",
+    "data_points": 250
+  },
+  "905ce4e78bb7dce82271252f2ab383cc": {
+    "code": "516910.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:57.250210",
+    "data_points": 250
+  },
+  "afb17c85f0ab223e4a2e4ca73270c8b4": {
+    "code": "159891.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:17:59.301809",
+    "data_points": 250
+  },
+  "58c42a3105c66f6526ecbd7ab8e9cc51": {
+    "code": "159898.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:01.289255",
+    "data_points": 250
+  },
+  "f86330fcb8c1d173ca9ede32ae753ce3": {
+    "code": "159703.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:03.276644",
+    "data_points": 250
+  },
+  "292725819ad8f460222fe27aa5ba812f": {
+    "code": "516320.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:05.254868",
+    "data_points": 250
+  },
+  "c151c21a0f13a0a1b71e1288c5bbef8b": {
+    "code": "159741.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:07.278719",
+    "data_points": 250
+  },
+  "1c27325816d9f81dda74388e94528fcc": {
+    "code": "159735.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:09.342372",
+    "data_points": 250
+  },
+  "51f74a3e0507f4e549e539ae730dcd20": {
+    "code": "513130.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:11.315865",
+    "data_points": 250
+  },
+  "389f75923f7cc5bfdec49d1074b5c750": {
+    "code": "516310.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:13.339719",
+    "data_points": 250
+  },
+  "7b1c536feba8eb5d26c490d93fafa177": {
+    "code": "517350.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:15.272174",
+    "data_points": 250
+  },
+  "0205b372119cbb1f5070b233a0c04fed": {
+    "code": "513580.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:17.304875",
+    "data_points": 250
+  },
+  "b9672366f5f0016b5542c7a0e91a44db": {
+    "code": "159740.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:19.279800",
+    "data_points": 250
+  },
+  "7bd2cec108512cc7984231e45d89b2d1": {
+    "code": "513180.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:21.100594",
+    "data_points": 250
+  },
+  "d429790edbcccdda6541f8893a64a37e": {
+    "code": "513010.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:23.077762",
+    "data_points": 250
+  },
+  "0533423edd1973052e0b43c7a87beb35": {
+    "code": "159742.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:25.049980",
+    "data_points": 250
+  },
+  "b4ab32f0a1e705e7d48b10864a7a3545": {
+    "code": "159888.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:27.051683",
+    "data_points": 250
+  },
+  "5b10970bd960b608907722e977e998cb": {
+    "code": "159887.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:29.065912",
+    "data_points": 250
+  },
+  "948846e940d68bd8fa4021113ba5d5e4": {
+    "code": "159836.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:31.055037",
+    "data_points": 250
+  },
+  "0878099e35ac315f9a3c9474985ba5c5": {
+    "code": "513690.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:33.130448",
+    "data_points": 250
+  },
+  "cacdbdc08e0ac96b2a894bfcad4d20e1": {
+    "code": "516700.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:35.142517",
+    "data_points": 250
+  },
+  "9ab9f3e524b90fbe7682f33679247697": {
+    "code": "516360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:37.124658",
+    "data_points": 250
+  },
+  "457deb3d1a678c450519bdaf5ca02304": {
+    "code": "516610.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:39.128970",
+    "data_points": 250
+  },
+  "5947444d2be96340558c039ff75a16d5": {
+    "code": "516950.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:41.109607",
+    "data_points": 250
+  },
+  "f24c8372bb4207f56f75a8b0834fc3fc": {
+    "code": "516590.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:43.158324",
+    "data_points": 250
+  },
+  "c8cd4d693d270d6893d2b48c6ea1f3c8": {
+    "code": "159883.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:45.154313",
+    "data_points": 250
+  },
+  "4749b85caaf5ed4b264dea944f535569": {
+    "code": "516900.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:47.173777",
+    "data_points": 250
+  },
+  "70740c2408e3038f338d3dee674ac7e3": {
+    "code": "516070.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:48.883376",
+    "data_points": 250
+  },
+  "cfe8667bf2fe1bc3e762f43793827020": {
+    "code": "159886.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:50.900935",
+    "data_points": 250
+  },
+  "14d371b519f102202bdd79a55587d3b2": {
+    "code": "517170.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:52.857917",
+    "data_points": 250
+  },
+  "87582eeec4dc6110ff77f081b74b9689": {
+    "code": "516110.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:54.688372",
+    "data_points": 250
+  },
+  "3d51d27f22259c266848005808b696f6": {
+    "code": "516960.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:56.673316",
+    "data_points": 250
+  },
+  "2c7bf6151bc2a9c8f90dd315d85b7297": {
+    "code": "159885.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:18:58.627041",
+    "data_points": 250
+  },
+  "23f0b52ededb730c2082cfcdbbba5aa8": {
+    "code": "516330.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:00.627207",
+    "data_points": 250
+  },
+  "30a137f6965a521151bbd5b790f2c6a6": {
+    "code": "516550.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:02.393072",
+    "data_points": 250
+  },
+  "f6db897076afd143c1d3499245ddec96": {
+    "code": "516510.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:04.397699",
+    "data_points": 250
+  },
+  "a3b7d544aca2f903b87722414386f9a0": {
+    "code": "159890.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:06.373260",
+    "data_points": 250
+  },
+  "6181c22a47b1a0e59b6a04a9adc810f9": {
+    "code": "159866.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:08.173667",
+    "data_points": 250
+  },
+  "57e9acb8d334d293c9b267aedb3a9293": {
+    "code": "159861.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:10.251992",
+    "data_points": 250
+  },
+  "b1af73db0549e6dc806e6574c671b9d4": {
+    "code": "516670.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:12.197390",
+    "data_points": 250
+  },
+  "e294be1f53842b490fc59c7ab9c54c57": {
+    "code": "513060.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:14.348353",
+    "data_points": 250
+  },
+  "71d90d27294528ec8047e520bde28d4e": {
+    "code": "159845.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:16.162217",
+    "data_points": 250
+  },
+  "dba27e1d191bc7ea0ebd0b1289009d94": {
+    "code": "159873.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:24.693775",
+    "data_points": 250
+  },
+  "0e465531d6da0838dcdfb41bdfe86d94": {
+    "code": "516300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:26.688067",
+    "data_points": 250
+  },
+  "5cfdf37162ea650c245bc6038efb3fb2": {
+    "code": "159858.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:28.515942",
+    "data_points": 250
+  },
+  "8a4ed719c0558c4ce3a30c7a5da5baab": {
+    "code": "159876.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:30.598431",
+    "data_points": 250
+  },
+  "527da8eb2df0afc86ccc7344a053480a": {
+    "code": "516090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:34.261740",
+    "data_points": 250
+  },
+  "698fde162dbbb6c9a8f6640bad11c611": {
+    "code": "159835.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:36.254488",
+    "data_points": 250
+  },
+  "a10fb6a45138c1735a82f3334bde447e": {
+    "code": "159871.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:38.331067",
+    "data_points": 250
+  },
+  "2737ffdcf5452d28f4849806e98ab16b": {
+    "code": "516150.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:40.286782",
+    "data_points": 250
+  },
+  "d24d869deccae07c0817739bd06e434e": {
+    "code": "516850.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:42.321316",
+    "data_points": 250
+  },
+  "9011fbe7914b9cebf0a5cc18afc42701": {
+    "code": "516200.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:44.251481",
+    "data_points": 250
+  },
+  "e44e58782715d61f5e22c3dabc75d3fb": {
+    "code": "159880.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:46.253999",
+    "data_points": 250
+  },
+  "6b8fe7b3bfb261ae19b0e0bafd8bf1ef": {
+    "code": "159851.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:48.297550",
+    "data_points": 250
+  },
+  "2d02f349002b5805a9ac72649895a9a5": {
+    "code": "516760.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:50.284286",
+    "data_points": 250
+  },
+  "816e77357b3035d8fdd1da6f1f6c6e15": {
+    "code": "516500.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:52.332635",
+    "data_points": 250
+  },
+  "e5e78b7f025cecd398451a39f9dcca01": {
+    "code": "159842.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:54.277838",
+    "data_points": 250
+  },
+  "91b9647892889b609923c377210a8917": {
+    "code": "516220.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:56.327186",
+    "data_points": 250
+  },
+  "24a22ac1a2e4f38672ee4146812af4ad": {
+    "code": "159865.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:19:58.306742",
+    "data_points": 250
+  },
+  "cd3b745f5af08865f7ed82a38536c801": {
+    "code": "516120.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:00.283900",
+    "data_points": 250
+  },
+  "38a6c958d878f8d981ab35a7e8e8a345": {
+    "code": "516020.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:02.277768",
+    "data_points": 250
+  },
+  "159e93b8be244b338b1f861cce1c49cb": {
+    "code": "516780.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:04.322366",
+    "data_points": 250
+  },
+  "713a50ea49b0a4665f7e8208e468e754": {
+    "code": "159869.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:06.319654",
+    "data_points": 250
+  },
+  "a0eb67796ce8753bb4512eca8ad9a3cc": {
+    "code": "159867.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:08.337485",
+    "data_points": 250
+  },
+  "dd6aebc4197c96dc38c2a6e87ee3c3cb": {
+    "code": "516770.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:10.303286",
+    "data_points": 250
+  },
+  "fd4da799d4baa20056192bd1cc362433": {
+    "code": "516010.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:12.366044",
+    "data_points": 250
+  },
+  "5a9396fbdc2204ba62826bff1b84ee33": {
+    "code": "159870.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:14.359249",
+    "data_points": 250
+  },
+  "6ea5b2f3719154584e62fbcffee3ba67": {
+    "code": "159863.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:16.397395",
+    "data_points": 250
+  },
+  "a287dac3319e2ed55f3a02ce2e46f00f": {
+    "code": "516520.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:18.351342",
+    "data_points": 250
+  },
+  "921b62766228ad7f85354d90ec5455f3": {
+    "code": "516000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:20.411100",
+    "data_points": 250
+  },
+  "be43feb9bd2ff4a799cd397e0f8f04d2": {
+    "code": "516180.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:22.365384",
+    "data_points": 250
+  },
+  "db15865084a8ae8f40286d57d6c12828": {
+    "code": "159855.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:24.382542",
+    "data_points": 250
+  },
+  "78cca0fc1efae320caa84312ed8e78fc": {
+    "code": "517100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:26.392688",
+    "data_points": 250
+  },
+  "7dae7c0587260faa8599a365660a5cfe": {
+    "code": "516600.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:28.406754",
+    "data_points": 250
+  },
+  "d280cfa4280d9ea2f4f7dfc2105733e2": {
+    "code": "516060.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:30.346775",
+    "data_points": 250
+  },
+  "7067264a1e0d8267e79e2c66b535ab4c": {
+    "code": "159848.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:32.381735",
+    "data_points": 250
+  },
+  "0b9cea9d95f7a124bf540ebaf4cedc5e": {
+    "code": "159849.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:34.365764",
+    "data_points": 250
+  },
+  "8498dd518783544652cf778b4afb8871": {
+    "code": "517000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:36.387093",
+    "data_points": 250
+  },
+  "4804df73c8e59ab0caeca7512c5fd1a8": {
+    "code": "159857.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:38.406830",
+    "data_points": 250
+  },
+  "5a246ba4bacc00cb07900016410e66b4": {
+    "code": "517300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:40.414181",
+    "data_points": 250
+  },
+  "e247ab9eb4e0245ac9c296cfbaf4c86a": {
+    "code": "516080.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:42.409586",
+    "data_points": 250
+  },
+  "45f33347f354a0f4388527a88004adff": {
+    "code": "515230.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:44.388562",
+    "data_points": 250
+  },
+  "eb6a0928857ea7673cb77fde8ad18c47": {
+    "code": "516660.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:46.431384",
+    "data_points": 250
+  },
+  "4de590934744f34cb0363e62d1f26d29": {
+    "code": "159850.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:48.389937",
+    "data_points": 250
+  },
+  "83c81e4fdaa26be3a01ef3a9fce9d592": {
+    "code": "517080.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:50.506019",
+    "data_points": 250
+  },
+  "dabd45b61de1c17991caa0c8426d80fc": {
+    "code": "159839.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:52.412334",
+    "data_points": 250
+  },
+  "a4e43564d06cc1917714c4de099daef1": {
+    "code": "516800.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:54.393559",
+    "data_points": 250
+  },
+  "9daef6282c738217d610c14d497bdb33": {
+    "code": "159852.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:56.464893",
+    "data_points": 250
+  },
+  "6cf2872af6b3ba24b382d70daed0180f": {
+    "code": "159841.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:20:58.405599",
+    "data_points": 250
+  },
+  "c8654d679f697af27f229d12d58ffc31": {
+    "code": "513330.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:01.682485",
+    "data_points": 250
+  },
+  "6a6aa00920e7e091093da88622126dfc": {
+    "code": "159843.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:03.682651",
+    "data_points": 250
+  },
+  "9ddb06af775955bc8ea909e1e234ff80": {
+    "code": "517050.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:05.663811",
+    "data_points": 250
+  },
+  "aa58999d6b8745782f0ec0eaa13b166b": {
+    "code": "517200.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:07.500995",
+    "data_points": 250
+  },
+  "c858498150e9370f4c2193257da5483c": {
+    "code": "516160.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:09.450880",
+    "data_points": 250
+  },
+  "594718cf52271e1e4c58935d895ee111": {
+    "code": "159856.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:11.499699",
+    "data_points": 250
+  },
+  "9543ec0ea1b31267636fd92f93e6fb77": {
+    "code": "515910.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:13.477729",
+    "data_points": 250
+  },
+  "31418efe34311d5d8e379083211a2b63": {
+    "code": "516050.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:15.501855",
+    "data_points": 250
+  },
+  "347db5e1d2b19ba27306a6f1fa8cb91b": {
+    "code": "159837.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:17.571431",
+    "data_points": 250
+  },
+  "5d9efeb676e9d78c8f91be386b9a4860": {
+    "code": "163418.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:19.521477",
+    "data_points": 250
+  },
+  "05f736699b8ae84bc034ce7e21cd3672": {
+    "code": "515400.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:21.484694",
+    "data_points": 250
+  },
+  "60d70df76b4826c79d39aa3aa08b8ddc": {
+    "code": "516880.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:23.492975",
+    "data_points": 250
+  },
+  "af0d4e16315bd7a172a95cbb66e2c473": {
+    "code": "515920.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:25.505419",
+    "data_points": 250
+  },
+  "cf652fe6fd6232eb18db2734caab06fe": {
+    "code": "515170.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:27.481669",
+    "data_points": 250
+  },
+  "f548a94da0aeb98d14bea3c6ab6daeaa": {
+    "code": "513550.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:29.589188",
+    "data_points": 250
+  },
+  "cc865fd7479e162b55452fdefd1cd896": {
+    "code": "515710.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:31.619995",
+    "data_points": 250
+  },
+  "c42e23d03e1b9636333a2cc076995208": {
+    "code": "159828.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:37.297241",
+    "data_points": 250
+  },
+  "85dd26e28968dcf9428e4298a8477ffb": {
+    "code": "515250.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:39.308970",
+    "data_points": 250
+  },
+  "896006520db78cccb708a3aaece0a9ac": {
+    "code": "515290.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:41.317575",
+    "data_points": 250
+  },
+  "4b6e6b124ca91b0dd0427b6c6fc7480f": {
+    "code": "159825.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:43.273172",
+    "data_points": 250
+  },
+  "563a10e95a769808b8a3dc6537bfe15a": {
+    "code": "159824.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:45.347033",
+    "data_points": 250
+  },
+  "4bcea434d5e2ceaa7c99ba5eb74b2404": {
+    "code": "159827.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:47.258575",
+    "data_points": 250
+  },
+  "83fdfc598a1d5ca213f4074586c42bf6": {
+    "code": "515790.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:49.087978",
+    "data_points": 250
+  },
+  "57531f11cc44366149e2a03a04fa5374": {
+    "code": "515120.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:51.401942",
+    "data_points": 250
+  },
+  "417de2a45486278673ed156c43339e49": {
+    "code": "515320.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:53.314220",
+    "data_points": 250
+  },
+  "681e147cb22fc00ab1d13661e3d172dc": {
+    "code": "513300.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:55.347143",
+    "data_points": 250
+  },
+  "7c30ca9a45ce66b000cf59997c2869a4": {
+    "code": "501207.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:57.293892",
+    "data_points": 250
+  },
+  "74048ea54867ea268821a9f2f7909349": {
+    "code": "501206.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:21:59.329300",
+    "data_points": 250
+  },
+  "0113d200235fa09b2b7db5a9870cc2d1": {
+    "code": "501208.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:01.361078",
+    "data_points": 250
+  },
+  "1a5e952ca91f38189a73327451826666": {
+    "code": "501205.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:03.315445",
+    "data_points": 250
+  },
+  "61aaae42b60861a4698eb9b5cfa6a7a1": {
+    "code": "159822.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:05.314672",
+    "data_points": 250
+  },
+  "d5d2e6ec4fc106426213c42659684946": {
+    "code": "159821.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:07.368139",
+    "data_points": 249
+  },
+  "124cf6a54e7f101d44b764b6bd248631": {
+    "code": "501203.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:09.359700",
+    "data_points": 250
+  },
+  "38225aa26c1dc97d726ea3fa5b45d9b5": {
+    "code": "588090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:11.400938",
+    "data_points": 250
+  },
+  "e1cdc4cd51004a5510a21d81ef5bdc54": {
+    "code": "588050.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:13.378770",
+    "data_points": 250
+  },
+  "50cfaac5596d767493ae1866487faa84": {
+    "code": "588080.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:15.394546",
+    "data_points": 250
+  },
+  "682838e016712224be47f124030eb5e5": {
+    "code": "588000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:17.369781",
+    "data_points": 250
+  },
+  "beb2589cd2a8eace00e246ba61c9a685": {
+    "code": "162720.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:19.397989",
+    "data_points": 250
+  },
+  "50e7a1830e9fdc5d962d3d83fbc99609": {
+    "code": "515530.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:21.363339",
+    "data_points": 250
+  },
+  "de10a1f2d7030c73f0b3ef823bcaa001": {
+    "code": "515760.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:30.509401",
+    "data_points": 250
+  },
+  "6586bccda3138eb88451c5626c48338e": {
+    "code": "510370.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:32.400686",
+    "data_points": 250
+  },
+  "f86c108a7239cb056a28d2ff1d994fb0": {
+    "code": "160529.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:34.413257",
+    "data_points": 242
+  },
+  "c06201dd62b377db13e2273d05863803": {
+    "code": "160143.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:36.433217",
+    "data_points": 235
+  },
+  "b1f4719069de42197dd9f6137ec83eef": {
+    "code": "518890.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:38.419573",
+    "data_points": 250
+  },
+  "e2addf0ba484a4a33df01b986aa5c2f4": {
+    "code": "502056.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:40.448827",
+    "data_points": 250
+  },
+  "11e29974727eb12df4cb50db58f89109": {
+    "code": "510760.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:42.445676",
+    "data_points": 250
+  },
+  "48060e235376d806814e0e912333fd73": {
+    "code": "161914.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:44.198103",
+    "data_points": 250
+  },
+  "72b159e24c8864ec45881c53d149cd08": {
+    "code": "161121.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:46.242325",
+    "data_points": 250
+  },
+  "e774e9d393f041f45e86ed868b291f4f": {
+    "code": "159820.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:48.268764",
+    "data_points": 250
+  },
+  "2b8168c0afe574650e812a12f3ef3486": {
+    "code": "518860.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:50.194920",
+    "data_points": 250
+  },
+  "ddd3596d0fd8124d20354e91881d71c4": {
+    "code": "159808.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:52.265576",
+    "data_points": 250
+  },
+  "90885575b97c97b055532a96427711e9": {
+    "code": "513990.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:54.216954",
+    "data_points": 250
+  },
+  "6027d28562cdc983a38452e974877de0": {
+    "code": "506001.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:56.249031",
+    "data_points": 250
+  },
+  "54e81d1bca0d87f97cb0b986e97da664": {
+    "code": "511360.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:22:58.218455",
+    "data_points": 250
+  },
+  "c0b2a9198977d6e4997106cd350c32e7": {
+    "code": "159816.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:00.253462",
+    "data_points": 249
+  },
+  "26c2cda347abb8d2032c3f2d9ff4fb5a": {
+    "code": "506005.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:02.224416",
+    "data_points": 250
+  },
+  "9677502e245e54214ffd201e95d7982f": {
+    "code": "506003.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:04.241799",
+    "data_points": 250
+  },
+  "7ef14227a613f58220a04956123d3552": {
+    "code": "506000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:06.213957",
+    "data_points": 250
+  },
+  "ba5f7e92557e95996d5d16869c548d8f": {
+    "code": "506002.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:08.235341",
+    "data_points": 250
+  },
+  "039683e2091f4ea108b32a37f0133322": {
+    "code": "506006.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:10.288329",
+    "data_points": 250
+  },
+  "dcd1e3d8e6fd15aed210648376bc03ca": {
+    "code": "159819.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:12.265342",
+    "data_points": 250
+  },
+  "b7adfee82a2da55e3b320f265ea70c44": {
+    "code": "160325.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:14.275176",
+    "data_points": 248
+  },
+  "a67f37602191c9ecc4e137bacb2b89e8": {
+    "code": "501202.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:16.249816",
+    "data_points": 249
+  },
+  "2886884e08fb9eeb9f6bffaf8633dccc": {
+    "code": "515260.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:18.375689",
+    "data_points": 250
+  },
+  "6533f79fbeae8615cd8ee60c3630bdfd": {
+    "code": "160926.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:20.278236",
+    "data_points": 248
+  },
+  "8b4bda63ad2a6a85a378c481028be02d": {
+    "code": "166027.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:22.361504",
+    "data_points": 243
+  },
+  "0f34b40e9daf8a08e3b6a73c30b60ea3": {
+    "code": "161040.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:24.336234",
+    "data_points": 246
+  },
+  "8c7529dca19f9f3a6f822da7e3e472dc": {
+    "code": "511180.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:26.264716",
+    "data_points": 250
+  },
+  "a20db32769828d425659013e58a55c89": {
+    "code": "518600.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:28.330349",
+    "data_points": 250
+  },
+  "6491c6b022b2f32f51ba3c50f117d6c8": {
+    "code": "518680.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:30.302202",
+    "data_points": 250
+  },
+  "cf7d0dbc6fea46ff6c0125af4af5987e": {
+    "code": "510570.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:32.342798",
+    "data_points": 250
+  },
+  "4a5044cc74ec3932ee808d1c1ce2efbb": {
+    "code": "515560.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:34.347885",
+    "data_points": 250
+  },
+  "b406d46c5cd7fdad0ed468f75bb276be": {
+    "code": "159814.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:36.290582",
+    "data_points": 250
+  },
+  "d154e20932dd1c6f5111d2fda633beeb": {
+    "code": "159810.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:38.337078",
+    "data_points": 250
+  },
+  "e113bfc27e02df58fd68e3ec0e6351fd": {
+    "code": "513080.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:40.320451",
+    "data_points": 249
+  },
+  "26f5cca1e10e5b77461e8bd2c1a79e68": {
+    "code": "515100.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:42.337478",
+    "data_points": 250
+  },
+  "dfd2e624cda38ac542f6455744f1f5fa": {
+    "code": "501200.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:44.379485",
+    "data_points": 250
+  },
+  "ca3893984d77cf8b72aecd0db39e744e": {
+    "code": "515770.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:46.351292",
+    "data_points": 250
+  },
+  "2a0b2dcaff69e0e29815f6ee2466a6be": {
+    "code": "515190.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:48.300934",
+    "data_points": 250
+  },
+  "4806682e2d665cc165c3f7e90277c45b": {
+    "code": "167508.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:50.345377",
+    "data_points": 224
+  },
+  "928a2cc6c58e67e98469034b06eb843a": {
+    "code": "159812.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:52.364910",
+    "data_points": 250
+  },
+  "9526a9011d46710e07a8e861c1591f39": {
+    "code": "518660.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:54.374185",
+    "data_points": 250
+  },
+  "f62094799adb20a42a7dea0f9709b855": {
+    "code": "515960.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:56.366725",
+    "data_points": 250
+  },
+  "072ee8e0eb3e006f31f5a293c44ebdc3": {
+    "code": "159813.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:23:58.371571",
+    "data_points": 250
+  },
+  "7a03fd6c4e20365e25eeb07c3eac350f": {
+    "code": "518850.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:00.386285",
+    "data_points": 250
+  },
+  "542e5f411b9c48483f2c7be85dfcd006": {
+    "code": "501099.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:02.436456",
+    "data_points": 238
+  },
+  "bb8142256c4573dba39f2c7d81598659": {
+    "code": "510200.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:04.356264",
+    "data_points": 250
+  },
+  "59a4803b8040c5c9ba7fd823069ea473": {
+    "code": "168701.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:06.348758",
+    "data_points": 250
+  },
+  "b030a4b48c8fe17cf4f493a1b743e020": {
+    "code": "515130.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:08.397199",
+    "data_points": 250
+  },
+  "4fcde34baefd7fdbb24c4beed842e3a3": {
+    "code": "159811.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:10.406391",
+    "data_points": 250
+  },
+  "256e9a58de1dbdde6e236488474036ee": {
+    "code": "164508.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:12.458057",
+    "data_points": 197
+  },
+  "a7eaa97c4ee42cdb85fd3f80cf246712": {
+    "code": "501097.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:14.383371",
+    "data_points": 241
+  },
+  "f439c4a0ce2fd61cfe10fe82ff618b50": {
+    "code": "501098.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:16.394544",
+    "data_points": 234
+  },
+  "dec5b75433afecb9c7fe7f99c48c895b": {
+    "code": "159992.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:18.683694",
+    "data_points": 250
+  },
+  "6c9fd2608f9b49f4704b3b33122078ef": {
+    "code": "515890.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:20.636341",
+    "data_points": 250
+  },
+  "5182724863afd9cbb83870bf8ef307c4": {
+    "code": "501096.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:22.448383",
+    "data_points": 250
+  },
+  "0a922b9bdff44d8c88d78048c5f648f2": {
+    "code": "159998.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:24.417277",
+    "data_points": 250
+  },
+  "29b3a97d1a2c07d9144ad6fae6f85acf": {
+    "code": "159991.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:26.406671",
+    "data_points": 250
+  },
+  "4385494a9f6221220e72a07f957b8a05": {
+    "code": "160527.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-10T23:24:28.459362",
+    "data_points": 227
+  },
+  "037906d48bb2abdfb5bf8ab91ebc2427": {
+    "code": "515950.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:52:58.518862",
+    "data_points": 250
+  },
+  "eb71da362a9bb245f0aeb94f610477a3": {
+    "code": "513090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:00.346044",
+    "data_points": 250
+  },
+  "a77d15731515f5553d840122030ed0db": {
+    "code": "501095.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:02.331174",
+    "data_points": 250
+  },
+  "5e0a7b1e73249e07245a493f2ce96862": {
+    "code": "159806.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:04.189157",
+    "data_points": 250
+  },
+  "d6e1663259f3c6255f6d465294fe11a6": {
+    "code": "511380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:06.498148",
+    "data_points": 250
+  },
+  "4cff3770cf8bdb2965914b5b10f0f21e": {
+    "code": "159805.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:09.089113",
+    "data_points": 250
+  },
+  "1069417d1ad538715afa8c464862ca48": {
+    "code": "501093.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:11.513977",
+    "data_points": 242
+  },
+  "91fccea547eef7249d2b81a004158153": {
+    "code": "159804.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:13.560333",
+    "data_points": 250
+  },
+  "3434bead9556604f8138e93a25ec649f": {
+    "code": "515630.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:15.506612",
+    "data_points": 250
+  },
+  "488cf88d26d4cc48d4e449d53f8c010f": {
+    "code": "159996.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:17.513896",
+    "data_points": 250
+  },
+  "86d311cf2fdd58a8157391f47185e0c5": {
+    "code": "159997.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:19.632252",
+    "data_points": 250
+  },
+  "3324e685b92164ac3c474a304b8a0e2c": {
+    "code": "501092.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:21.475459",
+    "data_points": 204
+  },
+  "222e6c35d10bf2776d38ae9db0f41401": {
+    "code": "515030.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:23.454402",
+    "data_points": 250
+  },
+  "fc6a9d23697cf1cc9f745464a6a87552": {
+    "code": "502000.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:26.386498",
+    "data_points": 250
+  },
+  "d63060f61ad0a4e5f633fdefaa55858f": {
+    "code": "515160.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:28.817816",
+    "data_points": 250
+  },
+  "d6dc2841933ccdb3324a0c51536261c5": {
+    "code": "159994.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:30.866258",
+    "data_points": 250
+  },
+  "ac4f447c7f4531887bd1bf2781c2d772": {
+    "code": "515210.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:32.636745",
+    "data_points": 250
+  },
+  "101cdffbb80a781e22f8b7bd6e0ee5dd": {
+    "code": "515850.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:34.739241",
+    "data_points": 250
+  },
+  "53deafc3dadb59ceba5720f8e690eaaa": {
+    "code": "515220.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:36.793424",
+    "data_points": 250
+  },
+  "e4cfed133458601f06c1b8040d064629": {
+    "code": "501091.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:38.758705",
+    "data_points": 218
+  },
+  "c9404466d89f554ae7f0eebade3d46e8": {
+    "code": "159801.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:41.007432",
+    "data_points": 250
+  },
+  "c205efff2293f9a5116f7ca29e9c6f87": {
+    "code": "159995.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:43.476258",
+    "data_points": 250
+  },
+  "077522fbbb972911fadebbf905fc3623": {
+    "code": "515090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:45.714984",
+    "data_points": 249
+  },
+  "5f54deb46cafccab3c72631fa6a9a4d6": {
+    "code": "515450.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:47.668619",
+    "data_points": 250
+  },
+  "03744558eaf28f6d2679ea8c72a0d8e1": {
+    "code": "515700.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:49.812419",
+    "data_points": 250
+  },
+  "105cce19ea01d44aad333459926c57f1": {
+    "code": "515380.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:52.097369",
+    "data_points": 250
+  },
+  "1e295705c8ab84d1bb0a19e5809ae723": {
+    "code": "159993.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:54.145418",
+    "data_points": 250
+  },
+  "e52838b94e5ed7b711feaeb754296451": {
+    "code": "515980.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:56.268090",
+    "data_points": 250
+  },
+  "0b16517996818d26935e57ea31862fd6": {
+    "code": "515350.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:53:58.517246",
+    "data_points": 250
+  },
+  "5e943a49fbbad8e99c021536bd36b41f": {
+    "code": "159970.SZ",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:54:00.795515",
+    "data_points": 249
+  },
+  "09de29b22048e0b709b9da8820bd9b6d": {
+    "code": "512730.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:54:02.714299",
+    "data_points": 250
+  },
+  "3c42615b6ab8e6da5aaa43605adff306": {
+    "code": "501090.SH",
+    "start_date": "20241202",
+    "end_date": "20251210",
+    "timestamp": "2025-12-11T08:54:04.662709",
+    "data_points": 250
   }
 }
