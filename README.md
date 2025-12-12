@@ -10,12 +10,11 @@ NL-to-Quant is an AI-powered platform that enables users to perform financial an
 ## ✨ Features
 
 *   **Natural Language Interface**: Describe your strategy in plain English or Chinese (e.g., "Buy when MA5 crosses MA20").
-*   **Multi-Agent Architecture**: Orchestrated by LangGraph, specialized agents handle data, coding, execution, analysis、宏观解读与估值定位。
+*   **Multi-Agent Architecture**: Orchestrated by LangGraph, specialized agents handle data, coding, execution, and analysis.
 *   **Automated Data Fetching**: Integrated with **Tushare Pro** for Chinese stock market data.
 *   **Fast Backtesting**: Uses **VectorBT** for high-performance vectorized backtesting.
 *   **Interactive Visualization**: View equity curves and performance metrics directly in the chat interface.
 *   **LLM Agnostic**: Supports OpenAI, DeepSeek, GitHub Models, and other OpenAI-compatible providers.
-*   **Macro & Valuation Insights**: 宏观分析 Agent 提供结构化宏观解读，估值 Agent 给出价格分位/相对位置提示（需已有行情数据）。
 
 ## 🚀 Getting Started
 
@@ -97,18 +96,33 @@ The application will open in your default web browser (usually at `http://localh
 *   "对 600519.SH 进行双均线回测"
 *   "Backtest a simple moving average crossover strategy on 600519.SH. Buy when MA10 > MA50, sell when MA10 < MA50."
 *   "Fetch data for AAPL and show me the close price." (Note: Requires US data source configuration, currently optimized for Tushare/CN stocks)
-*   "给出当前市场的宏观环境解读和风险点"
-*   "基于已获取的行情，评估 300750.SZ 的估值相对位置"
-*   "/macro 简要点评当前宏观环境" (直接调用宏观 Agent)
-*   "/valuation 评估 600519.SH 的估值相对位置" (已获取行情后可用)
-*   "/data 获取 000300.SH 的行情" (直接调用数据 Agent)
+
+### Index Valuation (AKShare)
+
+To fetch index PE/PB/dividend yield history with current percentiles via AKShare:
+
+```python
+from app.index_api import get_index_valuation
+
+result = get_index_valuation(
+    ts_code="000300.SH",
+    name="沪深300",
+    years=10,
+    data_source="akshare",  # omit to use DATA_SOURCE from .env
+)
+
+print(result["pe"], result["pb"], result["dividend_yield"])
+# result["history"] contains the full time series
+```
+
+Set `DATA_SOURCE=akshare` in `.env` to default all index fetches to AKShare. Keep `tushare` for the previous behavior.
 
 ## 📂 Project Structure
 
 ```text
 nl-to-quant/
 ├── app/
-│   ├── agents/             # Agent implementations (Data, Quant, Exec, Analyst, Macro, Valuation)
+│   ├── agents/             # Agent implementations (Data, Quant, Exec, Analyst)
 │   ├── config.py           # Configuration loader
 │   ├── graph.py            # LangGraph workflow definition
 │   ├── llm.py              # LLM factory

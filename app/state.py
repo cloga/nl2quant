@@ -35,6 +35,9 @@ class AgentState(TypedDict):
     
     # Benchmark Comparison
     benchmark_metrics: Optional[Dict[str, float]]  # Alpha, Beta, etc.
+
+    # Fundamentals for tickers (e.g., name/industry/valuation)
+    fundamentals: Optional[Dict[str, Any]]
     
     # Analyst Output
     analyst_figures: Optional[List[Any]] # List of Plotly figures
