@@ -13,3 +13,4 @@ scipy
 tables
 anywidget
 akshare
+pytest

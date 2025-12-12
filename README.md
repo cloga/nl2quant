@@ -31,22 +31,19 @@ NL-to-Quant is an AI-powered platform that enables users to perform financial an
     cd nl-to-quant
     ```
 
-2.  **Create and Activate Virtual Environment**:
-    It's recommended to use a virtual environment to manage dependencies.
+2.  **Create Virtual Environment (Required)**:
+    This project is intended to be run **only** inside a local virtual environment named `.venv`.
 
-    *   **Windows**:
+    *   **Windows (PowerShell)**:
         ```powershell
-        python -m venv venv
-        .\venv\Scripts\Activate.ps1
-        ```
-    *   **macOS/Linux**:
-        ```bash
-        python3 -m venv venv
-        source venv/bin/activate
+        python -m venv .venv
+        Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+        .\.venv\Scripts\Activate.ps1
         ```
 
-3.  **Install dependencies**:
-    ```bash
+3.  **Install dependencies (inside `.venv`)**:
+    ```powershell
+    python -m pip install --upgrade pip
     pip install -r requirements.txt
     ```
 
@@ -85,11 +82,18 @@ NL-to-Quant is an AI-powered platform that enables users to perform financial an
 
 Run the Streamlit application:
 
-```bash
-streamlit run main.py
+```powershell
+# Recommended: always run using the venv interpreter
+.\.venv\Scripts\python.exe -m streamlit run main.py
 ```
 
 The application will open in your default web browser (usually at `http://localhost:8501`).
+
+### Notes (Windows)
+
+- If PowerShell blocks activation scripts, keep using:
+    `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`
+- You can also avoid activation entirely by always using `.\.venv\Scripts\python.exe ...`.
 
 ### Example Prompts
 
