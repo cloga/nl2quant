@@ -76,6 +76,31 @@ def get_financial_period(pro):
     if md < 1101: return f"{year}0630" # Semi-Annual
     return f"{year}0930" # Q3
 
+def get_period_offset(period, years_offset):
+    """Calculate period string for N years ago."""
+    try:
+        p_date = datetime.strptime(period, "%Y%m%d")
+        new_year = p_date.year - years_offset
+        return f"{new_year}{p_date.month:02d}{p_date.day:02d}"
+    except:
+        return None
+
+def get_trade_date_offset(pro, date_str, years_offset=1):
+    """Get the nearest trading date N years ago."""
+    try:
+        d = datetime.strptime(date_str, "%Y%m%d")
+        target_d = d.replace(year=d.year - years_offset)
+        target_str = target_d.strftime('%Y%m%d')
+        
+        # Find nearest trade date (look back 10 days)
+        # Tushare trade_cal returns sorted by date desc by default
+        df = _ts_call(pro.trade_cal, exchange='SSE', is_open='1', end_date=target_str, limit=1, fields='cal_date')
+        if df is not None and not df.empty:
+            return df['cal_date'].iloc[0]
+    except Exception as e:
+        print(f"Error calculating offset date: {e}")
+    return None
+
 def batch_fetch(pro, api_func, ts_codes, period, fields, batch_size=50):
     results = []
     total = len(ts_codes)
@@ -117,6 +142,9 @@ def main():
     
     print("2. Fetching Stock List...")
     df_basic = _ts_call(pro.stock_basic, exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,market,list_date')
+    if df_basic is None or df_basic.empty:
+        print("Error: Failed to fetch stock list.")
+        return
     ts_codes = df_basic['ts_code'].tolist()
     print(f"Total Stocks: {len(ts_codes)}")
     
@@ -126,10 +154,26 @@ def main():
     # Added dv_ttm for rolling dividend yield
     df_daily = _ts_call(pro.daily_basic, trade_date=trade_date, fields='ts_code,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,dv_ratio,dv_ttm,total_mv,circ_mv')
     
+    if df_daily is None or df_daily.empty:
+        print("Error: Failed to fetch daily basic data.")
+        return
+
     # Use dv_ttm if available, otherwise fallback to dv_ratio
     if 'dv_ttm' in df_daily.columns:
         df_daily['dv_ratio'] = df_daily['dv_ttm'].fillna(df_daily['dv_ratio'])
     
+    print("3.1 Fetching Daily Basic 1 Year Ago (for Strict TTM Growth)...")
+    trade_date_1y = get_trade_date_offset(pro, trade_date, 1)
+    print(f"  Trade Date 1Y Ago: {trade_date_1y}")
+    
+    df_daily_1y = pd.DataFrame()
+    if trade_date_1y:
+        df_daily_1y = _ts_call(pro.daily_basic, trade_date=trade_date_1y, fields='ts_code,close,pe_ttm')
+        if df_daily_1y is not None and not df_daily_1y.empty:
+            df_daily_1y = df_daily_1y.rename(columns={'close': 'close_1y', 'pe_ttm': 'pe_ttm_1y'})
+        else:
+            df_daily_1y = pd.DataFrame()
+
     print("4. Fetching Financial Indicators (Ratios)...")
     # fields: roe, roa, gross_margin, net_profit_margin (net_income_of_total_revenue?), debt_to_assets, current_ratio
     # Tushare fields: 
@@ -143,7 +187,8 @@ def main():
     # Note: Tushare uses 'profit_to_gr' for Net Profit Margin usually.
     # We include 'gross_margin' but will validate it.
     # Added 'ca_turn' (Current Asset Turnover) to derive Current Assets.
-    fina_fields = 'ts_code,eps,dt_eps,bps,roe,roe_dt,roa,gross_margin,profit_to_gr,debt_to_assets,current_ratio,quick_ratio,ocf_to_debt,ca_turn'
+    # Added 'tr_yoy' (Revenue Growth YoY) and 'netprofit_yoy' (Net Profit Growth YoY)
+    fina_fields = 'ts_code,eps,dt_eps,bps,roe,roe_dt,roa,gross_margin,profit_to_gr,debt_to_assets,current_ratio,quick_ratio,ocf_to_debt,ca_turn,tr_yoy,netprofit_yoy'
     
     # fina_indicator supports batching well
     df_fina = batch_fetch(pro, pro.fina_indicator, ts_codes, period, fina_fields, batch_size=50)
@@ -152,15 +197,32 @@ def main():
     if 'profit_to_gr' in df_fina.columns:
         df_fina = df_fina.rename(columns={'profit_to_gr': 'net_profit_margin'})
     
-    print("5. Skipping Income/Balance Sheet Batch Fetch (Unreliable)...")
-    # Income and Balance Sheet interfaces fail with batching by ts_code.
-    # We will derive absolute values from Daily Basic (Valuation) and Fina Indicator (Ratios).
+    print("5. Fetching Historical EPS (for Growth Calculation)...")
+    # Fetch EPS from 3 years ago (for 3Y CAGR)
+    # Note: For 3Y Growth, we still use the reporting period EPS (CAGR of cumulative EPS)
+    # as it is a standard way to measure long term growth.
+    period_3y_ago = get_period_offset(period, 3)
+    print(f"  Fetching EPS for {period_3y_ago} (3 years ago)...")
+    
+    # Use smaller batch size to avoid timeouts/errors
+    df_eps_3y = batch_fetch(pro, pro.fina_indicator, ts_codes, period_3y_ago, 'ts_code,eps', batch_size=50)
+    if not df_eps_3y.empty:
+        df_eps_3y = df_eps_3y.rename(columns={'eps': 'eps_3y_ago'})
+        print(f"  Fetched {len(df_eps_3y)} records for 3Y ago EPS.")
+    else:
+        print("  Warning: No data fetched for 3Y ago EPS.")
     
     print("6. Merging Data...")
     # Base is stock_basic
     df = df_basic.merge(df_daily, on='ts_code', how='left')
     df = df.merge(df_fina, on='ts_code', how='left')
     
+    if not df_daily_1y.empty:
+        df = df.merge(df_daily_1y, on='ts_code', how='left')
+
+    if not df_eps_3y.empty:
+        df = df.merge(df_eps_3y, on='ts_code', how='left')
+
     # --- Derived Metrics ---
     print("7. Calculating Derived Metrics...")
     
@@ -204,6 +266,46 @@ def main():
     # Total Shares = Total MV * 10000 / Close
     df['total_shares'] = df['total_mv'] * 10000 / df['close']
     
+    # 6. Calculate Growth Rates
+    # 6.1 EPS Growth (TTM) - Strict TTM Calculation
+    # Current TTM EPS = Close / PE_TTM
+    # Prior TTM EPS = Close_1Y / PE_TTM_1Y
+    
+    # Ensure numeric
+    for col in ['pe_ttm', 'close', 'pe_ttm_1y', 'close_1y']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Calculate TTM EPS
+    # Avoid division by zero if PE is 0 or NaN
+    df['eps_ttm_current'] = df.apply(lambda x: x['close'] / x['pe_ttm'] if (pd.notnull(x['pe_ttm']) and x['pe_ttm'] != 0) else None, axis=1)
+    df['eps_ttm_1y'] = df.apply(lambda x: x['close_1y'] / x['pe_ttm_1y'] if (pd.notnull(x['pe_ttm_1y']) and x['pe_ttm_1y'] != 0) else None, axis=1)
+    
+    # Calculate Growth
+    mask_valid_ttm = (df['eps_ttm_1y'].abs() > 0.001)
+    df.loc[mask_valid_ttm, 'eps_growth_ttm'] = (
+        (df.loc[mask_valid_ttm, 'eps_ttm_current'] - df.loc[mask_valid_ttm, 'eps_ttm_1y']) / 
+        df.loc[mask_valid_ttm, 'eps_ttm_1y'].abs()
+    ) * 100
+    
+    # Fallback to netprofit_yoy if calculation failed or data missing
+    df['eps_growth_ttm'] = df['eps_growth_ttm'].fillna(df['netprofit_yoy'])
+
+    # 6.2 EPS Growth (3-Year CAGR)
+    # CAGR = (Ending Value / Beginning Value) ^ (1 / n) - 1
+    if 'eps' in df.columns and 'eps_3y_ago' in df.columns:
+        df['eps'] = pd.to_numeric(df['eps'], errors='coerce')
+        df['eps_3y_ago'] = pd.to_numeric(df['eps_3y_ago'], errors='coerce')
+        
+        # Only calculate if both are positive to avoid complex numbers or invalid growth logic
+        mask_valid_3y = (df['eps'] > 0) & (df['eps_3y_ago'] > 0)
+        
+        df.loc[mask_valid_3y, 'eps_growth_3y'] = (
+            (df.loc[mask_valid_3y, 'eps'] / df.loc[mask_valid_3y, 'eps_3y_ago']) ** (1/3) - 1
+        ) * 100
+    else:
+        df['eps_growth_3y'] = None
+
     # Equity (Parent) = BPS * Shares
     df['total_equity'] = df['bps'] * df['total_shares']
     

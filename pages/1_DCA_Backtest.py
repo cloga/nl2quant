@@ -1245,6 +1245,9 @@ if st.session_state.backtest_result is not None and st.session_state.last_run_co
                 benchmark_metrics = bm
                 break
 
+    st.markdown("---")
+    force_update = st.checkbox("强制更新 Analyst Agent 分析", key="force_update_dca", help="忽略缓存，重新生成分析结果")
+
     agent_state: AgentState = {
         "messages": [],
         "tickers": [st.session_state.last_run_context.get("code")],
@@ -1281,6 +1284,7 @@ if st.session_state.backtest_result is not None and st.session_state.last_run_co
         "feedback": None,
         "retry_count": None,
         "reasoning": None,
+        "force_update": force_update,
     }
 
     try:

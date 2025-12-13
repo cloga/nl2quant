@@ -8,9 +8,45 @@ import pandas as pd
 import streamlit as st
 import io
 import json
+import hashlib
+import pickle
+import os
+from typing import Any
+from pathlib import Path
+from app.config import Config
 from app.llm import get_llm, invoke_llm_with_retry
 from app.state import AgentState
 from app.ui_utils import render_live_timer, display_token_usage
+
+# --- Cache Configuration ---
+CACHE_DIR = Path(__file__).parent.parent.parent / "data" / "cache" / "analyst_agent"
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+def _get_cache_key(data: dict) -> str:
+    """Generate a stable hash for the input data."""
+    # Sort keys to ensure consistent ordering
+    serialized = json.dumps(data, sort_keys=True, default=str)
+    return hashlib.md5(serialized.encode('utf-8')).hexdigest()
+
+def _load_from_cache(key: str):
+    """Load result from cache if exists."""
+    cache_file = CACHE_DIR / f"{key}.pkl"
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'rb') as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Cache load failed: {e}")
+    return None
+
+def _save_to_cache(key: str, data: Any):
+    """Save result to cache."""
+    cache_file = CACHE_DIR / f"{key}.pkl"
+    try:
+        with open(cache_file, 'wb') as f:
+            pickle.dump(data, f)
+    except Exception as e:
+        print(f"Cache save failed: {e}")
 
 def analyst_agent(state: AgentState):
     """
@@ -18,8 +54,17 @@ def analyst_agent(state: AgentState):
     """
     print("--- ANALYST AGENT ---")
     st.write("🧐 **Analyst Agent:** Analyzing results...")
+    
+    force_update = state.get("force_update", False)
+
     provider = state.get("llm_provider")
     model = state.get("llm_model")
+
+    # Resolve actual provider/model for display
+    settings = Config.get_llm_settings(provider)
+    resolved_provider = settings["provider"]
+    resolved_model = model or settings.get("model")
+
     llm = get_llm(provider=provider, model=model)
     
     metrics = state.get("performance_metrics", {})
@@ -495,16 +540,38 @@ Output Requirements:
     formatted_messages = prompt.format_messages(**input_vars)
     formatted_prompt = "\n\n".join([f"**{m.type.upper()}**: {m.content}" for m in formatted_messages])
     
+    # --- Cache Logic ---
+    cache_key = _get_cache_key({
+        "prompt": formatted_prompt,
+        "provider": resolved_provider,
+        "model": resolved_model
+    })
+    
+    cached_response = None
+    if not force_update:
+        cached_response = _load_from_cache(cache_key)
+
     with st.expander("🧐 Analyst Agent", expanded=True):
-        timer = render_live_timer("⏳ Generating analysis summary...")
-        try:
-            response = invoke_llm_with_retry(chain, input_vars, max_retries=5, initial_delay=2.0)
-        except Exception as e:
+        if cached_response:
+            st.info("⚡ Analysis loaded from cache.")
+            response = cached_response
+        else:
+            timer = render_live_timer("⏳ Generating analysis summary...")
+            try:
+                response = invoke_llm_with_retry(
+                    chain, 
+                    input_vars, 
+                    max_retries=5, 
+                    initial_delay=2.0,
+                    provider_info=f"{resolved_provider}/{resolved_model}"
+                )
+                _save_to_cache(cache_key, response)
+            except Exception as e:
+                timer.empty()
+                st.error(f"❌ Failed to generate analysis after retries: {str(e)}")
+                st.info("当前分析未能成功生成。请检查LLM服务状态或稍后重试。")
+                raise
             timer.empty()
-            st.error(f"❌ Failed to generate analysis after retries: {str(e)}")
-            st.info("当前分析未能成功生成。请检查LLM服务状态或稍后重试。")
-            raise
-        timer.empty()
 
         # Show fallback/model info if available
         model_info = getattr(response, '_llm_provider', None)
@@ -550,3 +617,107 @@ Output Requirements:
             "response": response.content
         }
     }
+
+def stock_analysis_agent(company_info: dict, price_history: pd.DataFrame, provider: str = None, model: str = None, force_update: bool = False):
+    """
+    Agent for analyzing a single stock based on fundamentals and price history.
+    """
+    # Resolve actual provider/model for display
+    settings = Config.get_llm_settings(provider)
+    resolved_provider = settings["provider"]
+    resolved_model = model or settings.get("model")
+
+    llm = get_llm(provider=provider, model=model)
+    
+    # Prepare data for prompt
+    # Filter out None values to keep prompt clean
+    clean_info = {k: v for k, v in company_info.items() if pd.notnull(v)}
+    fundamentals_str = json.dumps(clean_info, indent=2, ensure_ascii=False, default=str)
+    
+    price_summary = "No price history available."
+    if price_history is not None and not price_history.empty:
+        # Calculate some basic stats
+        latest_price = price_history.iloc[-1]['close']
+        start_price = price_history.iloc[0]['close']
+        change_pct = (latest_price - start_price) / start_price * 100
+        high_1y = price_history['close'].max()
+        low_1y = price_history['close'].min()
+        volatility = price_history['close'].pct_change().std() * (252 ** 0.5) * 100
+        
+        price_summary = f"""
+        Latest Price: {latest_price}
+        1-Year Change: {change_pct:.2f}%
+        1-Year High: {high_1y}
+        1-Year Low: {low_1y}
+        Annualized Volatility: {volatility:.2f}%
+        """
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are a Senior Investment Analyst. 
+Your task is to analyze a company based on its fundamental data and recent stock price performance.
+
+Please provide a comprehensive investment analysis including:
+1. **Valuation Analysis**: Evaluate if the stock is undervalued or overvalued based on PE, PB, Graham Number, and Intrinsic Value.
+2. **Financial Health**: Assess profitability (ROE, Margins) and financial stability (Debt, Liquidity).
+3. **Growth Prospects**: Analyze growth rates (Revenue, Profit, Analyst Forecasts).
+4. **Price Trend**: Comment on the recent price performance and volatility.
+5. **Investment Verdict**: Give a clear recommendation (Buy, Hold, or Sell) with a risk assessment.
+
+Output Format: Markdown. Use Chinese for the response.
+"""),
+        ("human", """
+**Company Fundamentals:**
+{fundamentals}
+
+**Price Performance (1 Year):**
+{price_summary}
+
+Please provide your professional analysis.
+""")
+    ])
+    
+    chain = prompt | llm
+    
+    input_vars = {"fundamentals": fundamentals_str, "price_summary": price_summary}
+    
+    # --- Cache Logic ---
+    cache_key = _get_cache_key({
+        "input_vars": input_vars,
+        "provider": resolved_provider,
+        "model": resolved_model,
+        "agent": "stock_analysis_agent"
+    })
+    
+    cached_response = None
+    if not force_update:
+        cached_response = _load_from_cache(cache_key)
+    
+    with st.expander("🧐 Analyst Agent", expanded=True):
+        if cached_response:
+            st.info("⚡ Analysis loaded from cache.")
+            response = cached_response
+        else:
+            timer = render_live_timer("⏳ Generating analysis summary...")
+            try:
+                response = invoke_llm_with_retry(
+                    chain, 
+                    input_vars,
+                    provider_info=f"{resolved_provider}/{resolved_model}"
+                )
+                _save_to_cache(cache_key, response)
+            except Exception as e:
+                timer.empty()
+                st.error(f"❌ Failed to generate analysis: {str(e)}")
+                return
+            timer.empty()
+        
+        # Show fallback/model info if available
+        model_info = getattr(response, '_llm_provider', None)
+        if model_info:
+            st.info(f"当前使用的Agent模型: {model_info}")
+
+        display_token_usage(response)
+        
+        st.markdown(response.content)
+        
+        return response.content

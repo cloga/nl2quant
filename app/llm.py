@@ -33,7 +33,7 @@ def get_llm(provider: str | None = None, model: str | None = None, temperature: 
     raise ValueError(f"Unsupported LLM provider: {provider_name}")
 
 
-def invoke_llm_with_retry(chain: Any, input_vars: dict, max_retries: int = 5, initial_delay: float = 1.0) -> Any:
+def invoke_llm_with_retry(chain: Any, input_vars: dict, max_retries: int = 5, initial_delay: float = 1.0, provider_info: str = None) -> Any:
     """
     Invoke an LLM chain with exponential backoff retry logic.
     
@@ -42,6 +42,7 @@ def invoke_llm_with_retry(chain: Any, input_vars: dict, max_retries: int = 5, in
         input_vars: Input variables for the chain
         max_retries: Maximum number of retry attempts
         initial_delay: Initial delay in seconds before first retry
+        provider_info: Optional string describing the provider/model (e.g. "openai/gpt-4")
         
     Returns:
         The response from the LLM chain
@@ -56,7 +57,7 @@ def invoke_llm_with_retry(chain: Any, input_vars: dict, max_retries: int = 5, in
     for attempt in range(max_retries):
         try:
             response = chain.invoke(input_vars)
-            response._llm_provider = getattr(chain, 'provider', None) or getattr(chain, 'model', None) or 'unknown'
+            response._llm_provider = provider_info or getattr(chain, 'provider', None) or getattr(chain, 'model', None) or 'unknown'
             return response
         except Exception as e:
             last_exception = e
@@ -80,12 +81,18 @@ def invoke_llm_with_retry(chain: Any, input_vars: dict, max_retries: int = 5, in
                             from app.llm import get_llm
                             deepseek_llm = get_llm(provider='deepseek')
                             # Rebuild chain with DeepSeek LLM
-                            chain_with_deepseek = chain.copy()
-                            chain_with_deepseek.llm = deepseek_llm
-                            response = chain_with_deepseek.invoke(input_vars)
-                            response._llm_provider = 'deepseek'
-                            response._llm_fallback_error = error_message
-                            return response
+                            # chain is likely a RunnableSequence (Prompt | LLM)
+                            # We try to extract the prompt (first step) and create a new chain
+                            if hasattr(chain, 'first'):
+                                prompt = chain.first
+                                chain_with_deepseek = prompt | deepseek_llm
+                                response = chain_with_deepseek.invoke(input_vars)
+                                response._llm_provider = 'deepseek'
+                                response._llm_fallback_error = error_message
+                                return response
+                            else:
+                                # Fallback for other chain types if possible, or raise original error
+                                raise RuntimeError(f"Cannot swap LLM in chain type: {type(chain)}")
                         except Exception as deepseek_e:
                             raise RuntimeError(f"Both GitHub and DeepSeek LLMs failed. GitHub error: {error_message}; DeepSeek error: {deepseek_e}")
             # For other errors, raise immediately

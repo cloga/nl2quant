@@ -478,26 +478,32 @@ def main():
 
     st.markdown("---")
     st.subheader("🧐 Analyst Agent 解读")
-    st.caption("点击后，Analyst Agent 会基于上方报告给出要点总结与风险提示。")
+    st.caption("点击后，Analyst Agent 会基于上方报告给出要点总结与风险提示。（生成过程可能需要 3-5 分钟，请耐心等待）")
 
-    if st.button("生成解读", use_container_width=True):
-        provider = os.getenv("LLM_PROVIDER", Config.LLM_PROVIDER)
-        model_default = Config.PROVIDER_DEFAULT_MODELS.get(provider, None)
-        state: AgentState = {
-            "messages": [],
-            "tickers": [code1, code2],
-            "start_date": start_dt.strftime("%Y-%m-%d"),
-            "end_date": end_dt.strftime("%Y-%m-%d"),
-            "market_data": state_data.get("market_data"),
-            "execution_output": report_text,
-            "performance_metrics": state_data.get("perf"),
-            "fundamentals": state_data.get("fundamentals"),
-            "meta": {"price_mode": price_mode, "adj_type": adj_type},
-            "llm_provider": provider,
-            "llm_model": os.getenv(f"LLM_{provider.upper()}_MODEL_NAME", model_default),
-            "analysis_runs": 0,
-        }
-        analyst_agent(state)
+    col_btn, col_opt = st.columns([3, 1])
+    with col_opt:
+        force_update = st.checkbox("强制更新", key="force_update_corr", help="忽略缓存，重新生成分析结果")
+
+    with col_btn:
+        if st.button("生成解读", use_container_width=True):
+            provider = os.getenv("LLM_PROVIDER", Config.LLM_PROVIDER)
+            model_default = Config.PROVIDER_DEFAULT_MODELS.get(provider, None)
+            state: AgentState = {
+                "messages": [],
+                "tickers": [code1, code2],
+                "start_date": start_dt.strftime("%Y-%m-%d"),
+                "end_date": end_dt.strftime("%Y-%m-%d"),
+                "market_data": state_data.get("market_data"),
+                "execution_output": report_text,
+                "performance_metrics": state_data.get("perf"),
+                "fundamentals": state_data.get("fundamentals"),
+                "meta": {"price_mode": price_mode, "adj_type": adj_type},
+                "llm_provider": provider,
+                "llm_model": os.getenv(f"LLM_{provider.upper()}_MODEL_NAME", model_default),
+                "analysis_runs": 0,
+                "force_update": force_update,
+            }
+            analyst_agent(state)
 
 
 if __name__ == "__main__":

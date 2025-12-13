@@ -955,6 +955,8 @@ if run_btn:
             }
 
             st.markdown("### 🧐 Analyst Agent 专业意见")
+            force_update = st.checkbox("强制更新", key="force_update_profiler", help="忽略缓存，重新生成分析结果")
+            agent_state["force_update"] = force_update
             analyst_agent(agent_state)
         except Exception as e:
             st.warning(f"⚠️ Analyst Agent 运行失败：{e}")
