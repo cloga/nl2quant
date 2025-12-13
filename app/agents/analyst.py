@@ -376,8 +376,16 @@ Market Data Info: {data_info}
             roe = f.get("roe")
             roa = f.get("roa")
             np_yoy = f.get("netprofit_yoy")
+
+            pe_text = f"{pe:.2f}" if pe is not None else "-"
+            pb_text = f"{pb:.2f}" if pb is not None else "-"
+            total_mv_text = f"{(total_mv / 1e8):.1f}" if total_mv is not None else "-"
+            roe_text = f"{roe:.2f}" if roe is not None else "-"
+            roa_text = f"{roa:.2f}" if roa is not None else "-"
+            np_yoy_text = f"{np_yoy:.2f}%" if np_yoy is not None else "-"
+            rev_text = f"{rev:,.0f}" if rev is not None else "-"
             f_lines.append(
-                f"{code} | {name} | 行业/类别: {industry} | PE: {pe if pe is not None else '-'} | PB: {pb if pb is not None else '-'} | 总市值(亿): {total_mv/1e8:.1f if total_mv is not None else '-'} | ROE: {roe:.2f if roe is not None else '-'} | ROA: {roa:.2f if roa is not None else '-'} | 净利同比: {np_yoy:.2f if np_yoy is not None else '-'}% | 收入({rev_period}): {rev if rev is not None else '-'}"
+                f"{code} | {name} | 行业/类别: {industry} | PE: {pe_text} | PB: {pb_text} | 总市值(亿): {total_mv_text} | ROE: {roe_text} | ROA: {roa_text} | 净利同比: {np_yoy_text} | 收入({rev_period}): {rev_text}"
             )
         fundamentals_info = "\n".join(f_lines)
 

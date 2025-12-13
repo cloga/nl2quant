@@ -9,6 +9,7 @@
 """
 
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -16,6 +17,7 @@ from typing import Optional
 import pandas as pd
 import tushare as ts
 from dotenv import load_dotenv
+from app.utils.rate_limiter import GLOBAL_LIMITER
 
 
 @dataclass
@@ -104,11 +106,20 @@ def _get_pro():
     return ts.pro_api()
 
 
+def _ts_call(method, **kwargs):
+    """Rate-limited Tushare API call wrapper.
+
+    Blocks if more than 500 calls are made within a minute.
+    """
+    GLOBAL_LIMITER.acquire()
+    return method(**kwargs)
+
+
 def get_latest_price_and_market_cap(pro, ts_code: str) -> tuple[float, float, str]:
     """获取最新价格和市值"""
     # 获取最新交易日
     today = datetime.now().strftime("%Y%m%d")
-    df = pro.daily(ts_code=ts_code, start_date="20241201", end_date=today)
+    df = _ts_call(pro.daily, ts_code=ts_code, start_date="20241201", end_date=today)
     if df.empty:
         raise ValueError(f"无法获取 {ts_code} 的最新交易数据")
     
@@ -117,7 +128,7 @@ def get_latest_price_and_market_cap(pro, ts_code: str) -> tuple[float, float, st
     trade_date = str(latest["trade_date"])
     
     # 获取总股本(万股)
-    df_basic = pro.daily_basic(ts_code=ts_code, trade_date=trade_date, fields="ts_code,trade_date,total_share,total_mv")
+    df_basic = _ts_call(pro.daily_basic, ts_code=ts_code, trade_date=trade_date, fields="ts_code,trade_date,total_share,total_mv")
     if df_basic.empty or pd.isna(df_basic.iloc[0]["total_mv"]):
         # 计算市值: 收盘价 * 总股本(万股) / 10000 = 亿元
         total_share = float(df_basic.iloc[0]["total_share"])
@@ -134,7 +145,7 @@ def get_static_pe(pro, ts_code: str, current_year: int, market_cap: float) -> Op
     period = f"{last_year}1231"
     
     try:
-        df = pro.income(ts_code=ts_code, period=period, fields="ts_code,end_date,n_income")
+        df = _ts_call(pro.income, ts_code=ts_code, period=period, fields="ts_code,end_date,n_income")
         if df.empty or pd.isna(df.iloc[0]["n_income"]):
             return None
         
@@ -151,7 +162,7 @@ def get_static_pe(pro, ts_code: str, current_year: int, market_cap: float) -> Op
 def get_ttm_pe(pro, ts_code: str, trade_date: str) -> Optional[float]:
     """获取TTM市盈率 (直接从daily_basic获取)"""
     try:
-        df = pro.daily_basic(ts_code=ts_code, trade_date=trade_date, fields="ts_code,trade_date,pe_ttm")
+        df = _ts_call(pro.daily_basic, ts_code=ts_code, trade_date=trade_date, fields="ts_code,trade_date,pe_ttm")
         if df.empty or pd.isna(df.iloc[0]["pe_ttm"]):
             return None
         return float(df.iloc[0]["pe_ttm"])
@@ -170,8 +181,8 @@ def _q3_q4_share_median(pro, ts_code: str, current_year: int, lookback_years: in
     start_year = max(2009, current_year - lookback_years)
     for y in range(current_year - 1, start_year - 1, -1):
         try:
-            df_c3 = pro.income(ts_code=ts_code, period=f"{y}0930", fields="n_income")
-            df_fy = pro.income(ts_code=ts_code, period=f"{y}1231", fields="n_income")
+            df_c3 = _ts_call(pro.income, ts_code=ts_code, period=f"{y}0930", fields="n_income")
+            df_fy = _ts_call(pro.income, ts_code=ts_code, period=f"{y}1231", fields="n_income")
             if df_c3.empty or df_fy.empty:
                 continue
             c3 = float(df_c3.iloc[0]["n_income"]) / 100000000
@@ -201,7 +212,7 @@ def get_linear_extrapolate_pe(pro, ts_code: str, market_cap: float) -> tuple[Opt
 
     # 1) 尝试Q3历史权重法（多年中位数）
     try:
-        df_y_q3 = pro.income(ts_code=ts_code, period=f"{current_year}0930", fields="n_income")
+        df_y_q3 = _ts_call(pro.income, ts_code=ts_code, period=f"{current_year}0930", fields="n_income")
         if not df_y_q3.empty and pd.notna(df_y_q3.iloc[0]["n_income"]):
             C3_y = float(df_y_q3.iloc[0]["n_income"]) / 100000000
             # 历史Q4占比中位数
@@ -212,8 +223,8 @@ def get_linear_extrapolate_pe(pro, ts_code: str, market_cap: float) -> tuple[Opt
                     pe = market_cap / FY_y
                     return pe, f"{current_year}Q3(seasonal-median)"
             # 若不可得，用去年单年比例法
-            df_l_q3 = pro.income(ts_code=ts_code, period=f"{current_year-1}0930", fields="n_income")
-            df_l_fy = pro.income(ts_code=ts_code, period=f"{current_year-1}1231", fields="n_income")
+            df_l_q3 = _ts_call(pro.income, ts_code=ts_code, period=f"{current_year-1}0930", fields="n_income")
+            df_l_fy = _ts_call(pro.income, ts_code=ts_code, period=f"{current_year-1}1231", fields="n_income")
             if (not df_l_q3.empty and pd.notna(df_l_q3.iloc[0]["n_income"]) and
                 not df_l_fy.empty and pd.notna(df_l_fy.iloc[0]["n_income"])):
                 C3_l = float(df_l_q3.iloc[0]["n_income"]) / 100000000
@@ -241,7 +252,7 @@ def get_linear_extrapolate_pe(pro, ts_code: str, market_cap: float) -> tuple[Opt
 
     for year, end_date, quarter_name in possible_quarters:
         try:
-            df = pro.income(ts_code=ts_code, period=f"{year}{end_date}", fields="n_income")
+            df = _ts_call(pro.income, ts_code=ts_code, period=f"{year}{end_date}", fields="n_income")
             if df.empty or pd.isna(df.iloc[0]["n_income"]):
                 continue
             cumulative = float(df.iloc[0]["n_income"]) / 100000000
@@ -269,7 +280,7 @@ def get_forecast_pe(pro, ts_code: str, market_cap: float, forecast_year: int) ->
     """计算机构预测PE (平均值和中位数)"""
     # 尝试从 report_rc 获取EPS预测
     try:
-        df = pro.report_rc(ts_code=ts_code)
+        df = _ts_call(pro.report_rc, ts_code=ts_code)
         if df is None or df.empty or "eps" not in df.columns:
             return None, None
         
@@ -301,7 +312,7 @@ def get_forecast_pe(pro, ts_code: str, market_cap: float, forecast_year: int) ->
         eps_median = sorted(eps_list)[len(eps_list) // 2]
         
         # 获取总股本
-        df_basic = pro.daily_basic(ts_code=ts_code, fields="ts_code,total_share", limit=1)
+        df_basic = _ts_call(pro.daily_basic, ts_code=ts_code, fields="ts_code,total_share", limit=1)
         if df_basic.empty:
             return None, None
         

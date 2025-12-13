@@ -313,30 +313,46 @@ def main():
         type1_default = st.session_state.corr_state.get("type1", "auto")
         type1 = c1.selectbox("标的1类型", options=list(ASSET_OPTIONS.keys()), format_func=lambda x: ASSET_OPTIONS[x], index=list(ASSET_OPTIONS.keys()).index(type1_default), key="type1_select")
         
-        code1_preset = c2.selectbox(
-            "标的1代码",
-            preset_labels,
-            index=0,
-            help="选择预设",
-            key="code1_preset_select"
-        )
-        preset1 = next(p for p in PRESET_CHOICES if p["label"] == code1_preset)
-        code1 = preset1["code"] if preset1["code"] else st.session_state.corr_state.get("code1", "600036.SH")
-        type1_default = preset1["type"] if preset1["code"] else st.session_state.corr_state.get("type1", "auto")
+        with c2:
+            code1_preset = st.selectbox(
+                "标的1代码",
+                preset_labels,
+                index=0,
+                help="选择预设；选择“自定义/手动输入”可手动填写",
+                key="code1_preset_select",
+            )
+            preset1 = next(p for p in PRESET_CHOICES if p["label"] == code1_preset)
+            if preset1["code"]:
+                code1 = preset1["code"]
+            else:
+                code1 = st.text_input(
+                    "手动输入标的1代码",
+                    value=st.session_state.corr_state.get("code1", "600036.SH"),
+                    placeholder="例如：600036.SH 或 159928.SZ",
+                    key="code1_manual_input",
+                )
 
         type2_default = st.session_state.corr_state.get("type2", "auto")
         type2 = c3.selectbox("标的2类型", options=list(ASSET_OPTIONS.keys()), format_func=lambda x: ASSET_OPTIONS[x], index=list(ASSET_OPTIONS.keys()).index(type2_default), key="type2_select")
         
-        code2_preset = c4.selectbox(
-            "标的2代码",
-            preset_labels,
-            index=0,
-            help="选择预设",
-            key="code2_preset_select"
-        )
-        preset2 = next(p for p in PRESET_CHOICES if p["label"] == code2_preset)
-        code2 = preset2["code"] if preset2["code"] else st.session_state.corr_state.get("code2", "601166.SH")
-        type2_default = preset2["type"] if preset2["code"] else st.session_state.corr_state.get("type2", "auto")
+        with c4:
+            code2_preset = st.selectbox(
+                "标的2代码",
+                preset_labels,
+                index=0,
+                help="选择预设；选择“自定义/手动输入”可手动填写",
+                key="code2_preset_select",
+            )
+            preset2 = next(p for p in PRESET_CHOICES if p["label"] == code2_preset)
+            if preset2["code"]:
+                code2 = preset2["code"]
+            else:
+                code2 = st.text_input(
+                    "手动输入标的2代码",
+                    value=st.session_state.corr_state.get("code2", "601166.SH"),
+                    placeholder="例如：601166.SH 或 510300.SH",
+                    key="code2_manual_input",
+                )
 
         # Row 2: dates + price/adj options
         c5, c6, c7, c8 = st.columns([1.5, 1.5, 1, 1])
@@ -348,6 +364,12 @@ def main():
         submitted = st.form_submit_button("运行相关分析", use_container_width=True)
 
     if submitted:
+        code1 = (code1 or "").strip().upper()
+        code2 = (code2 or "").strip().upper()
+        if not code1 or not code2:
+            st.error("请填写标的1/标的2代码后再运行分析。")
+            return
+
         analyzer = CorrelationAnalyzer(adj_type=adj_type, price_mode=price_mode)
 
         try:
