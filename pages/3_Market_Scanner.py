@@ -134,7 +134,13 @@ with st.expander("ℹ️ 指标解释 (Indicator Definitions)"):
     - **PB**: 市净率 (最新)，股价 / 每股净资产。衡量股价相对于净资产的溢价。
     - **Div Yield (TTM) %**: 股息率 (滚动)，过去12个月每股股息 / 股价。衡量现金分红回报率。
     - **Graham Num**: 格雷厄姆数值，即 $\\sqrt{22.5 \\times EPS \\times BVPS}$。源自格雷厄姆的防御型投资标准（PE<15 且 PB<1.5，乘积为 22.5）。股价低于此值即视为具有安全边际。
-    - **Intrinsic Value**: 内在价值 (成长型)，Calculated as $EPS \times (8.5 + 2g)$。其中 $g$ 为预期增长率 (Expected Annual Growth Rate of EPS)，可在左侧边栏调整。格雷厄姆原意指未来7-10年的平均增长率，本系统默认使用分析师对当年的EPS增长预期作为参考。
+    - **Intrinsic Value**: 内在价值 (成长型)，计算公式为 $V = EPS \times (8.5 + 2g)$。
+        - **$g$ 的定义**: 预期年化增长率的**整数值**（如增长 10% 则 $g=10$）。
+        - **适用范围**: 该公式适用于增长率在 **0% - 15%** 之间的稳健型公司。
+        - **⚠️ 局限性**: 
+            1. **高增长失真**: 当 $g > 20$ 时，公式会给出极高的估值。**系统默认开启 "Cap Growth Rate at 15%" 选项，将 $g$ 限制在 15 以内以修正此问题。**
+            2. **基数效应**: 若历史增长率（如 3年 CAGR）是基于低基数（如疫情期间）计算的恢复性高增长，直接套用会导致估值严重虚高。
+            3. **建议**: 对于高增长或周期性反弹个股，建议在左侧选择 "Manual Input" 并输入保守的长期增长率（如 8-12%）。
     - **NCAV/Share**: 每股净流动资产价值，Calculated as $(Current Assets - Total Liabilities) / Total Shares$。深度价值投资指标，股价低于此值通常被认为是极度低估。
       > **⚠️ 注意**: 银行及部分金融类公司因会计准则差异（不区分流动/非流动资产），无法计算 NCAV，该指标会显示为 N/A。
     - **Price/Graham**: 股价与格雷厄姆数值的比率。小于1表示股价低于格雷厄姆数值。
@@ -151,6 +157,29 @@ with st.expander("ℹ️ 指标解释 (Indicator Definitions)"):
     - **EPS Growth (3Y) %**: 每股收益3年复合增长率 (CAGR)，反映过去3年的长期增长趋势。
     - **Rev Growth %**: 营业收入同比增长率 (Year-over-Year)。
     - **Profit Growth %**: 净利润同比增长率 (Year-over-Year)。
+
+    ### 智能分类 (Graham Classification)
+    系统根据估值指标自动将股票划分为以下 5 类（优先级从高到低）。
+    **注意**: 若开启 "Enable Strict Quality Checks" (默认开启)，分类将包含额外的财务健康检查。
+
+    1. **💎 Deep Value (Net-Net)**: 深度价值股。
+       - **基础条件**: 股价 < NCAV (净流动资产价值)。
+       - **严格模式 (Strict)**: 需同时满足 **资产负债率 < 50%**。
+       - **含义**: 极度低估，买入价格低于公司的清算价值（流动资产减去所有负债）。这是格雷厄姆最经典的“捡烟蒂”策略。
+    2. **🛡️ Defensive Value**: 防御型价值股。
+       - **基础条件**: 股价 < Graham Number (格雷厄姆数值)。
+       - **严格模式 (Strict)**: 需同时满足 **流动比率 > 1.2** 且 **资产负债率 < 50%** 且 **ROE > 0**。
+       - **含义**: 符合格雷厄姆防御型投资标准，兼顾了盈利能力和资产安全边际。
+    3. **🚀 Growth Value**: 成长型价值股。
+       - **基础条件**: 股价 < Intrinsic Value (内在价值)。
+       - **严格模式 (Strict)**: 需同时满足 **ROE > 8%** 且 **资产负债率 < 60%**。
+       - **含义**: 基于成长性模型计算出的低估。这类股票可能市净率较高，但高增长率支撑了其内在价值。*(受左侧 Growth Rate 设置影响)*
+    4. **⚠️ Distressed / Loss Making**: 困境/亏损股。
+       - **条件**: 亏损 (EPS < 0) 或 资不抵债 (BPS < 0)。
+       - **含义**: 基本面恶化，无法使用常规公式估值。
+    5. **☁️ Premium / Watch**: 溢价/观察股。
+       - **条件**: 股价高于上述所有估值指标。
+       - **含义**: 市场给予了溢价，可能处于高估状态，或者拥有极高的护城河/成长性（超出了模型的捕捉范围）。
 
     ### 财务数据 (Financials)
     - **Market Cap (B)**: 总市值 (亿元)。
@@ -265,10 +294,63 @@ elif g_source == "Historical 3-Year Growth Rate":
         df['calc_growth_rate'] = pd.to_numeric(df['netprofit_yoy'], errors='coerce').fillna(0)
         st.sidebar.warning("⚠️ 3-Year Growth data missing. Using Last Year Profit Growth as proxy.")
 
+# Cap Growth Rate Option
+enable_cap = st.sidebar.checkbox(
+    "Cap Growth Rate at 15%", 
+    value=True, 
+    help="Limit 'g' to 15% to avoid unrealistic valuations for high-growth companies (Graham formula limitation)."
+)
+
+if enable_cap:
+    df['calc_growth_rate'] = df['calc_growth_rate'].clip(upper=15)
+
+# Strict Mode Option
+enable_strict_class = st.sidebar.checkbox(
+    "Enable Strict Quality Checks", 
+    value=True, 
+    help="Add financial health constraints (ROE, Debt, Current Ratio) to Graham Class definitions."
+)
+
 # Calculate Intrinsic Value dynamically
 # V = EPS * (8.5 + 2g)
 df['intrinsic_value'] = df['eps'] * (8.5 + 2 * df['calc_growth_rate'])
 df['price_to_intrinsic'] = df['close'] / df['intrinsic_value']
+
+# --- Graham Classification (Dynamic) ---
+# Default to "Premium" (Price > All Metrics)
+df['graham_class'] = "☁️ Premium / Watch"
+
+# Distressed: Negative Earnings or Equity (Graham Number is NaN)
+mask_distressed = (df['graham_number'].isna())
+df.loc[mask_distressed, 'graham_class'] = "⚠️ Distressed / Loss Making"
+
+# Growth Value: Price < Intrinsic Value
+# (Applied first, can be overridden by stricter categories)
+mask_growth = (df['price_to_intrinsic'] < 1)
+if enable_strict_class:
+    # Strict: ROE > 8% AND Debt Ratio < 60%
+    # Fillna with False-like values to be conservative
+    mask_growth &= (df['roe'].fillna(0) > 8) & (df['debt_to_assets'].fillna(100) < 60)
+
+df.loc[mask_growth, 'graham_class'] = "🚀 Growth Value"
+
+# Defensive Value: Price < Graham Number
+# (Overrides Growth Value as it's a stricter/safer asset-based standard)
+mask_defensive = (df['price_to_graham'] < 1)
+if enable_strict_class:
+    # Strict: Current Ratio > 1.2 AND Debt Ratio < 50% AND Profitable
+    mask_defensive &= (df['current_ratio'].fillna(0) > 1.2) & (df['debt_to_assets'].fillna(100) < 50) & (df['roe'].fillna(0) > 0)
+
+df.loc[mask_defensive, 'graham_class'] = "🛡️ Defensive Value"
+
+# Deep Value (Net-Net): Price < NCAV
+# (Highest Priority: The deepest form of value)
+mask_deep = (df['price_to_ncav'] < 1) & (df['price_to_ncav'] > 0)
+if enable_strict_class:
+    # Strict: Debt Ratio < 50% (Avoid debt-heavy melting ice cubes)
+    mask_deep &= (df['debt_to_assets'].fillna(100) < 50)
+
+df.loc[mask_deep, 'graham_class'] = "💎 Deep Value (Net-Net)"
 
 st.sidebar.markdown("---")
 
@@ -279,6 +361,7 @@ st.sidebar.header("Filters")
 if st.sidebar.button("🔄 Reset / Show All", help="Clear all filters to show all data"):
     st.session_state.filter_industry = []
     st.session_state.filter_search = ""
+    st.session_state.filter_graham_class = "All"
     st.session_state.filter_enable_mv = False
     st.session_state.filter_enable_pe = False
     st.session_state.filter_enable_pb = False
@@ -289,12 +372,16 @@ if st.sidebar.button("🔄 Reset / Show All", help="Clear all filters to show al
     st.session_state.filter_enable_dv = False
     st.rerun()
 
-# Industry Filter
-industries = sorted(df['industry'].dropna().unique())
-selected_industries = st.sidebar.multiselect("Industry", industries, key="filter_industry")
+# Graham Class Filter
+graham_classes = ["All", "💎 Deep Value (Net-Net)", "🛡️ Defensive Value", "🚀 Growth Value", "☁️ Premium / Watch", "⚠️ Distressed / Loss Making"]
+selected_class = st.sidebar.selectbox("Graham Class", graham_classes, index=0, key="filter_graham_class")
 
 # Search Filter
 search_term = st.sidebar.text_input("Search", placeholder="Code or Name (e.g. 000001 or 平安)", key="filter_search")
+
+# Industry Filter
+industries = sorted(df['industry'].dropna().unique())
+selected_industries = st.sidebar.multiselect("Industry", industries, key="filter_industry")
 
 # --- Advanced Filters (Collapsible) ---
 with st.sidebar.expander("💰 Valuation & Size Filters", expanded=True):
@@ -353,6 +440,9 @@ if search_term:
 
 if selected_industries:
     filtered_df = filtered_df[filtered_df['industry'].isin(selected_industries)]
+
+if selected_class != "All":
+    filtered_df = filtered_df[filtered_df['graham_class'] == selected_class]
 
 # Market Cap
 if enable_mv:
@@ -420,7 +510,7 @@ for col in ['tr_yoy', 'netprofit_yoy', 'eps_growth_ttm', 'eps_growth_3y', 'eps_t
 
 # Display Columns
 display_cols = [
-    'ts_code', 'name', 'industry', 'report_period', 'close', 
+    'ts_code', 'name', 'industry', 'graham_class', 'report_period', 'close', 
     'pe_ttm', 'pb', 'dv_ratio', 
     'graham_number', 'price_to_graham', 
     'intrinsic_value', 'price_to_intrinsic',
@@ -444,6 +534,7 @@ st.dataframe(
         "ts_code": "Code",
         "name": "Name",
         "industry": "Industry",
+        "graham_class": "Graham Class",
         "report_period": "Report Period",
         "close": "Price",
         "pe_ttm": "PE (TTM)",
