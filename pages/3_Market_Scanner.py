@@ -294,6 +294,9 @@ elif g_source == "Historical 3-Year Growth Rate":
         df['calc_growth_rate'] = pd.to_numeric(df['netprofit_yoy'], errors='coerce').fillna(0)
         st.sidebar.warning("⚠️ 3-Year Growth data missing. Using Last Year Profit Growth as proxy.")
 
+# Store raw growth rate for display purposes
+df['raw_growth_rate'] = df['calc_growth_rate']
+
 # Cap Growth Rate Option
 enable_cap = st.sidebar.checkbox(
     "Cap Growth Rate at 15%", 
@@ -611,7 +614,26 @@ if selected_code:
         st.metric("Price / Intrinsic", piv)
     with iv_cols[2]:
         g_used = round(company['calc_growth_rate'], 2) if pd.notnull(company['calc_growth_rate']) else "N/A"
-        st.metric("Growth Rate Used", f"{g_used}%")
+        
+        # Check for capping logic
+        raw_g = company.get('raw_growth_rate', g_used)
+        is_capped = False
+        try:
+            if enable_cap and float(raw_g) > 15 and float(company['calc_growth_rate']) == 15:
+                is_capped = True
+        except:
+            pass
+
+        if is_capped:
+            st.metric(
+                "Growth Rate Used", 
+                f"{g_used}%", 
+                delta=f"Capped from {round(raw_g, 1)}%", 
+                delta_color="off",
+                help=f"Original Growth Rate was {round(raw_g, 2)}%. Capped at 15% to prevent valuation distortion."
+            )
+        else:
+            st.metric("Growth Rate Used", f"{g_used}%")
     with iv_cols[3]:
         st.caption(f"Source: {g_source}")
 
