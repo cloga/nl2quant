@@ -11,13 +11,223 @@ from app.agents.analyst import stock_analysis_agent
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as ReportLabImage
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as ReportLabImage, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="A-Share Scanner", page_icon="🔍", layout="wide")
 
-def create_pdf(company_info, analysis_text, chart_bytes=None):
+@st.cache_data(ttl=3600)
+def fetch_real_dividend_yield(ts_code, current_price):
+    import tushare as ts
+    import os
+    from dotenv import load_dotenv
+    import pandas as pd
+    
+    load_dotenv()
+    token = os.getenv("TUSHARE_TOKEN")
+    if not token: return None, None
+    
+    ts.set_token(token)
+    pro = ts.pro_api()
+    
+    try:
+        # Fetch dividends with split info
+        # Note: stk_bo_rate might be needed for some stocks
+        df_div = pro.dividend(ts_code=ts_code)
+        if df_div is None or df_div.empty:
+            return None, None
+            
+        # Filter implemented
+        df_impl = df_div[df_div['div_proc'] == '实施'].copy()
+        if df_impl.empty:
+            return None, None
+            
+        # Ensure columns exist and fill NaN
+        for col in ['stk_div', 'stk_bo_rate']:
+            if col not in df_impl.columns:
+                df_impl[col] = 0.0
+            else:
+                df_impl[col] = df_impl[col].fillna(0.0)
+        
+        # Extract year
+        df_impl['year'] = df_impl['end_date'].astype(str).str[:4]
+        
+        # Find the latest year that has data
+        years = sorted(df_impl['year'].unique(), reverse=True)
+        if not years: return None, None
+        
+        selected_year = years[0]
+        
+        # Check if latest year has year-end dividend (1231)
+        # If not, and we have previous year data, prefer previous year (to ensure full fiscal year)
+        latest_year_data = df_impl[df_impl['year'] == selected_year]
+        has_year_end = latest_year_data['end_date'].astype(str).str.endswith('1231').any()
+        
+        if not has_year_end and len(years) > 1:
+            selected_year = years[1]
+        
+        # Get all dividends for the selected year
+        target_divs = df_impl[df_impl['year'] == selected_year].copy()
+        
+        # Calculate adjusted dividend sum
+        total_adj_div = 0.0
+        
+        # We need to adjust each dividend payment by any splits that happened ON or AFTER its ex-date
+        # Get all split events (from the whole history, or at least relevant ones)
+        # We only care about splits that happened after the earliest ex-date of our target dividends
+        min_ex_date = target_divs['ex_date'].min()
+        
+        # Filter splits: any record with stk_div > 0 or stk_bo_rate > 0
+        splits = df_impl[(df_impl['stk_div'] > 0) | (df_impl['stk_bo_rate'] > 0)].copy()
+        
+        for _, row in target_divs.iterrows():
+            div_amount = row['cash_div_tax']
+            div_ex_date = row['ex_date']
+            
+            # Find all splits that affect this dividend (happened on or after this dividend's ex-date)
+            # Note: If the split is in the SAME record (same ex_date), it definitely affects it.
+            relevant_splits = splits[splits['ex_date'] >= div_ex_date]
+            
+            split_factor = 1.0
+            for _, split_row in relevant_splits.iterrows():
+                # Factor = 1 + (Bonus + Capitalization) / 10
+                factor = 1.0 + (split_row['stk_div'] + split_row['stk_bo_rate']) / 10.0
+                split_factor *= factor
+            
+            if split_factor > 0:
+                total_adj_div += div_amount / split_factor
+            else:
+                total_adj_div += div_amount
+
+        if current_price == 0: return 0, selected_year
+        
+        yield_val = (total_adj_div / current_price) * 100
+        return yield_val, selected_year
+        
+    except Exception as e:
+        print(f"Error fetching dividend: {e}")
+        return None, None
+        return yield_val, latest_year
+        
+    except Exception as e:
+        print(f"Error fetching dividend: {e}")
+        return None, None
+
+def create_company_details_image(company_info, scenarios, health_data, chart_bytes=None):
+    # Canvas setup
+    width = 1200
+    height = 2000 # Initial height, will crop later
+    bg_color = (255, 255, 255)
+    img = Image.new('RGB', (width, height), bg_color)
+    draw = ImageDraw.Draw(img)
+    
+    # Fonts
+    try:
+        # Try to use SimHei for Chinese support on Windows
+        font_title = ImageFont.truetype("simhei.ttf", 50)
+        font_header = ImageFont.truetype("simhei.ttf", 40)
+        font_text = ImageFont.truetype("simhei.ttf", 30)
+        font_small = ImageFont.truetype("simhei.ttf", 24)
+    except:
+        # Fallback
+        font_title = ImageFont.load_default()
+        font_header = ImageFont.load_default()
+        font_text = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+        
+    y = 50
+    margin = 50
+    col_width = (width - 2 * margin) // 2
+    
+    # 1. Title
+    title = f"{company_info.get('name', '')} ({company_info.get('ts_code', '')})"
+    draw.text((margin, y), title, font=font_title, fill=(0, 0, 0))
+    y += 80
+    
+    # 2. Basic Info Grid
+    draw.text((margin, y), "Basic Information", font=font_header, fill=(0, 0, 128))
+    y += 50
+    
+    info_items = [
+        f"Industry: {company_info.get('industry', '')}",
+        f"Price: {company_info.get('close', '')}",
+        f"PE (TTM): {company_info.get('pe_ttm', '')}",
+        f"PB: {company_info.get('pb', '')}",
+        f"ROE: {company_info.get('roe', '')}%",
+        f"Div Yield: {company_info.get('dv_ratio', '')}%",
+        f"Graham Num: {company_info.get('graham_number', '')}",
+        f"NCAV: {company_info.get('ncav_per_share', '')}"
+    ]
+    
+    # Draw 2 columns
+    for i, item in enumerate(info_items):
+        col = i % 2
+        row = i // 2
+        x = margin + col * col_width
+        curr_y = y + row * 40
+        draw.text((x, curr_y), item, font=font_text, fill=(50, 50, 50))
+        
+    y += (len(info_items) // 2 + 1) * 40 + 20
+    
+    # 3. Intrinsic Value Scenarios
+    draw.text((margin, y), "Intrinsic Value Scenarios", font=font_header, fill=(0, 0, 128))
+    y += 50
+    
+    for s in scenarios:
+        label = s['label']
+        val = f"{round(s['val'], 2)}"
+        g = s['g_disp']
+        line = f"• {label}: {val} (g={g})"
+        draw.text((margin + 20, y), line, font=font_text, fill=(0, 0, 0))
+        y += 40
+        
+    y += 30
+    
+    # 4. Financial Health
+    draw.text((margin, y), "Financial Health", font=font_header, fill=(0, 0, 128))
+    y += 50
+    
+    metrics = health_data['Metric']
+    values = health_data['Value']
+    
+    # Draw 2 columns
+    for i, (m, v) in enumerate(zip(metrics, values)):
+        col = i % 2
+        row = i // 2
+        x = margin + col * col_width
+        curr_y = y + row * 40
+        draw.text((x, curr_y), f"{m}: {v}", font=font_text, fill=(0, 100, 0))
+        
+    y += (len(metrics) // 2 + 1) * 40 + 30
+    
+    # 5. Chart
+    if chart_bytes:
+        try:
+            chart_img = Image.open(io.BytesIO(chart_bytes))
+            # Resize to fit width
+            target_w = width - 2 * margin
+            ratio = target_w / chart_img.width
+            target_h = int(chart_img.height * ratio)
+            chart_img = chart_img.resize((target_w, target_h))
+            
+            img.paste(chart_img, (margin, y))
+            y += target_h + 20
+        except Exception as e:
+            draw.text((margin, y), f"Error loading chart: {e}", font=font_small, fill=(255, 0, 0))
+            y += 40
+            
+    # Crop to content
+    img = img.crop((0, 0, width, y + 50))
+    
+    # Save to buffer
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+def create_pdf(company_info, analysis_text, chart_bytes=None, scenarios=None, health_data=None):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4)
     styles = getSampleStyleSheet()
@@ -52,6 +262,15 @@ def create_pdf(company_info, analysis_text, chart_bytes=None):
         leading=20,
         spaceAfter=12
     )
+    
+    style_subheading = ParagraphStyle(
+        'ChineseSubHeading',
+        parent=styles['Heading2'],
+        fontName=font_name,
+        fontSize=14,
+        leading=18,
+        spaceAfter=10
+    )
 
     story = []
     
@@ -81,9 +300,65 @@ def create_pdf(company_info, analysis_text, chart_bytes=None):
     story.append(Paragraph(info_text, style_normal))
     story.append(Spacer(1, 12))
 
+    # Intrinsic Value Scenarios Table
+    if scenarios:
+        story.append(Paragraph("Intrinsic Value Scenarios", style_subheading))
+        
+        # Prepare table data
+        table_data = [["Scenario", "Intrinsic Value", "Price / IV", "Growth Rate (g)"]]
+        for s in scenarios:
+            p_iv = "Inf"
+            if s['val'] != 0:
+                try:
+                    p_iv = f"{float(company_info.get('close', 0)) / s['val']:.2f}"
+                except:
+                    p_iv = "N/A"
+            
+            table_data.append([
+                s['label'],
+                f"{s['val']:.2f}",
+                p_iv,
+                s['g_disp']
+            ])
+            
+        t = Table(table_data, colWidths=[150, 100, 100, 100])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 12))
+
+    # Financial Health Table
+    if health_data:
+        story.append(Paragraph("Financial Health", style_subheading))
+        
+        # Prepare table data
+        # health_data is dict: {"Metric": [...], "Value": [...]}
+        table_data = [["Metric", "Value"]]
+        for m, v in zip(health_data["Metric"], health_data["Value"]):
+            table_data.append([m, v])
+            
+        t = Table(table_data, colWidths=[200, 150])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 12))
+
     # Price Chart
     if chart_bytes:
-        story.append(Paragraph("Price Trend (1 Year)", style_heading))
+        story.append(Paragraph("Price Trend (1 Year)", style_subheading))
         story.append(Spacer(1, 6))
         try:
             img = ReportLabImage(io.BytesIO(chart_bytes), width=450, height=250)
@@ -745,8 +1020,15 @@ if selected_code != st.session_state.details_code:
     st.session_state.details_code = selected_code
 
 if selected_code:
-    company = df[df['ts_code'] == selected_code].iloc[0]
+    company = df[df['ts_code'] == selected_code].iloc[0].copy()
     
+    # Fetch real yield
+    real_yield, yield_year = fetch_real_dividend_yield(company['ts_code'], company['close'])
+    yield_label = None
+    if real_yield is not None:
+        company['dv_ratio'] = round(real_yield, 2)
+        yield_label = f"Fiscal {yield_year}"
+
     # --- Compact View ---
     # Row 1: Basic & Valuation
     r1c1, r1c2, r1c3, r1c4, r1c5, r1c6 = st.columns(6)
@@ -755,7 +1037,7 @@ if selected_code:
     with r1c3: st.metric("PE (TTM)", round(company['pe_ttm'], 2) if pd.notnull(company['pe_ttm']) else "N/A")
     with r1c4: st.metric("PB", round(company['pb'], 2) if pd.notnull(company['pb']) else "N/A")
     with r1c5: st.metric("ROE", f"{round(company['roe'], 2)}%" if pd.notnull(company['roe']) else "N/A")
-    with r1c6: st.metric("Div Yield", f"{company['dv_ratio']}%" if pd.notnull(company['dv_ratio']) else "N/A")
+    with r1c6: st.metric("Div Yield", f"{company['dv_ratio']}%" if pd.notnull(company['dv_ratio']) else "N/A", delta=yield_label, delta_color="off")
 
     # Row 2: Financials & Growth
     r2c1, r2c2, r2c3, r2c4, r2c5, r2c6 = st.columns(6)
@@ -1061,6 +1343,17 @@ if selected_code:
             # Just log to console or ignore if image generation fails, don't break the app
             print(f"Error generating chart image: {e}")
             
+        # Download Image Button
+        if chart_bytes:
+            img_buffer = create_company_details_image(company.to_dict(), scenarios, health_data, chart_bytes)
+            st.download_button(
+                label="🖼️ Download Details as Image",
+                data=img_buffer,
+                file_name=f"{selected_code}_details.png",
+                mime="image/png",
+                use_container_width=True
+            )
+            
     else:
         st.warning("Could not fetch price history data.")
 
@@ -1090,7 +1383,7 @@ if selected_code:
         with st.expander("🧐 Analyst Agent (Cached)", expanded=True):
             st.markdown(current_analysis)
         
-        pdf_buffer = create_pdf(company.to_dict(), current_analysis, chart_bytes=chart_bytes)
+        pdf_buffer = create_pdf(company.to_dict(), current_analysis, chart_bytes=chart_bytes, scenarios=scenarios, health_data=health_data)
         st.download_button(
             label="📄 Download Analysis PDF",
             data=pdf_buffer,
