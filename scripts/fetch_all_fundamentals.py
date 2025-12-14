@@ -174,6 +174,18 @@ def main():
         else:
             df_daily_1y = pd.DataFrame()
 
+    print("3.2 Fetching Daily Basic 3 Years Ago (for 3Y CAGR)...")
+    trade_date_3y = get_trade_date_offset(pro, trade_date, 3)
+    print(f"  Trade Date 3Y Ago: {trade_date_3y}")
+    
+    df_daily_3y = pd.DataFrame()
+    if trade_date_3y:
+        df_daily_3y = _ts_call(pro.daily_basic, trade_date=trade_date_3y, fields='ts_code,close,pe_ttm')
+        if df_daily_3y is not None and not df_daily_3y.empty:
+            df_daily_3y = df_daily_3y.rename(columns={'close': 'close_3y', 'pe_ttm': 'pe_ttm_3y'})
+        else:
+            df_daily_3y = pd.DataFrame()
+
     print("4. Fetching Financial Indicators (Ratios)...")
     # fields: roe, roa, gross_margin, net_profit_margin (net_income_of_total_revenue?), debt_to_assets, current_ratio
     # Tushare fields: 
@@ -219,6 +231,9 @@ def main():
     
     if not df_daily_1y.empty:
         df = df.merge(df_daily_1y, on='ts_code', how='left')
+
+    if not df_daily_3y.empty:
+        df = df.merge(df_daily_3y, on='ts_code', how='left')
 
     if not df_eps_3y.empty:
         df = df.merge(df_eps_3y, on='ts_code', how='left')
@@ -292,19 +307,37 @@ def main():
     df['eps_growth_ttm'] = df['eps_growth_ttm'].fillna(df['netprofit_yoy'])
 
     # 6.2 EPS Growth (3-Year CAGR)
+    # Prefer TTM EPS for 3Y Growth if available, as it handles seasonality and is more robust.
+    # Calculate TTM EPS for 3 years ago
+    if 'close_3y' in df.columns and 'pe_ttm_3y' in df.columns:
+        df['close_3y'] = pd.to_numeric(df['close_3y'], errors='coerce')
+        df['pe_ttm_3y'] = pd.to_numeric(df['pe_ttm_3y'], errors='coerce')
+        df['eps_ttm_3y'] = df.apply(lambda x: x['close_3y'] / x['pe_ttm_3y'] if (pd.notnull(x['pe_ttm_3y']) and x['pe_ttm_3y'] != 0) else None, axis=1)
+    else:
+        df['eps_ttm_3y'] = None
+
+    # Use TTM EPS for 3Y Growth if both current and 3Y ago TTM EPS are available
+    mask_valid_3y_ttm = (df['eps_ttm_current'] > 0) & (df['eps_ttm_3y'] > 0)
+    
+    df.loc[mask_valid_3y_ttm, 'eps_growth_3y'] = (
+        (df.loc[mask_valid_3y_ttm, 'eps_ttm_current'] / df.loc[mask_valid_3y_ttm, 'eps_ttm_3y']) ** (1/3) - 1
+    ) * 100
+
+    # Fallback to Reported EPS if TTM not available
     # CAGR = (Ending Value / Beginning Value) ^ (1 / n) - 1
     if 'eps' in df.columns and 'eps_3y_ago' in df.columns:
         df['eps'] = pd.to_numeric(df['eps'], errors='coerce')
         df['eps_3y_ago'] = pd.to_numeric(df['eps_3y_ago'], errors='coerce')
         
         # Only calculate if both are positive to avoid complex numbers or invalid growth logic
-        mask_valid_3y = (df['eps'] > 0) & (df['eps_3y_ago'] > 0)
+        # And only if not already calculated by TTM
+        mask_valid_3y_reported = (df['eps'] > 0) & (df['eps_3y_ago'] > 0) & (df['eps_growth_3y'].isna())
         
-        df.loc[mask_valid_3y, 'eps_growth_3y'] = (
-            (df.loc[mask_valid_3y, 'eps'] / df.loc[mask_valid_3y, 'eps_3y_ago']) ** (1/3) - 1
+        df.loc[mask_valid_3y_reported, 'eps_growth_3y'] = (
+            (df.loc[mask_valid_3y_reported, 'eps'] / df.loc[mask_valid_3y_reported, 'eps_3y_ago']) ** (1/3) - 1
         ) * 100
-    else:
-        df['eps_growth_3y'] = None
+    
+    # If still None, leave as None
 
     # Equity (Parent) = BPS * Shares
     df['total_equity'] = df['bps'] * df['total_shares']

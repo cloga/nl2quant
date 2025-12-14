@@ -22,7 +22,7 @@ def get_llm(provider: str | None = None, model: str | None = None, temperature: 
             base_url=base_url,
             temperature=temperature,
             max_retries=5,  # Enable retry for rate limit errors
-            request_timeout=60,  # Increase timeout
+            request_timeout=120,  # Increase timeout to 120s
         )
 
     # Future extension for Gemini (Google) native API if needed
