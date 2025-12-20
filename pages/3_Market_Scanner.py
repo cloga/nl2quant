@@ -537,6 +537,24 @@ def load_data(file_path, mtime):
     # Ensure eps and bps are numeric
     df['eps'] = pd.to_numeric(df['eps'], errors='coerce')
     df['bps'] = pd.to_numeric(df['bps'], errors='coerce')
+
+    # Fix BPS scaling issue for stocks with 0.1 face value (e.g. Zijin Mining)
+    # Tushare fina_indicator might return BPS per 1 RMB face value (10x actual)
+    if 'bps_derived' in df.columns:
+        df['bps_derived'] = pd.to_numeric(df['bps_derived'], errors='coerce')
+        # Check if bps is approx 10x bps_derived (allow some tolerance, e.g. 8x to 12x)
+        mask_10x = (df['bps_derived'] > 0) & (df['bps'] > df['bps_derived'] * 8) & (df['bps'] < df['bps_derived'] * 12)
+        if mask_10x.any():
+            # print(f"Fixing BPS for {mask_10x.sum()} stocks (dividing by 10)")
+            df.loc[mask_10x, 'bps'] = df.loc[mask_10x, 'bps'] / 10
+
+    # Fix EPS scaling issue (e.g. Ninebot 689009.SH)
+    if 'eps_derived' in df.columns:
+        df['eps_derived'] = pd.to_numeric(df['eps_derived'], errors='coerce')
+        # Check if eps is approx 10x eps_derived
+        mask_eps_10x = (df['eps_derived'] > 0) & (df['eps'] > df['eps_derived'] * 8) & (df['eps'] < df['eps_derived'] * 12)
+        if mask_eps_10x.any():
+            df.loc[mask_eps_10x, 'eps'] = df.loc[mask_eps_10x, 'eps'] / 10
     
     # Only calculate if EPS > 0 and BPS > 0
     mask_graham = (df['eps'] > 0) & (df['bps'] > 0)

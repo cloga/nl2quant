@@ -280,6 +280,26 @@ def main():
     # We derive Total Liabilities and Current Assets to calculate NCAV.
     # Total Shares = Total MV * 10000 / Close
     df['total_shares'] = df['total_mv'] * 10000 / df['close']
+
+    # --- Fix Scaling Issues (BPS/EPS 10x) ---
+    # Some stocks (e.g. Zijin Mining, Ninebot) have 0.1 face value, Tushare might return scaled data.
+    # We use derived metrics to detect and fix this.
+    
+    # Fix BPS
+    if 'bps_derived' in df.columns:
+        df['bps_derived'] = pd.to_numeric(df['bps_derived'], errors='coerce')
+        mask_bps_10x = (df['bps_derived'] > 0) & (df['bps'] > df['bps_derived'] * 8) & (df['bps'] < df['bps_derived'] * 12)
+        if mask_bps_10x.any():
+            print(f"  Fixing BPS scaling for {mask_bps_10x.sum()} stocks...")
+            df.loc[mask_bps_10x, 'bps'] = df.loc[mask_bps_10x, 'bps'] / 10
+
+    # Fix EPS
+    if 'eps_derived' in df.columns:
+        df['eps_derived'] = pd.to_numeric(df['eps_derived'], errors='coerce')
+        mask_eps_10x = (df['eps_derived'] > 0) & (df['eps'] > df['eps_derived'] * 8) & (df['eps'] < df['eps_derived'] * 12)
+        if mask_eps_10x.any():
+            print(f"  Fixing EPS scaling for {mask_eps_10x.sum()} stocks...")
+            df.loc[mask_eps_10x, 'eps'] = df.loc[mask_eps_10x, 'eps'] / 10
     
     # 6. Calculate Growth Rates
     # 6.1 EPS Growth (TTM) - Strict TTM Calculation
